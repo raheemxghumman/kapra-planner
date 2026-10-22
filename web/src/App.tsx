@@ -2,12 +2,15 @@ import { AnimatePresence } from 'motion/react';
 import { Route, Routes, useLocation } from 'react-router';
 import { ProtectedRoute, PublicOnlyRoute } from './components/routing/ProtectedRoute';
 import { DashboardLayout } from './layouts/DashboardLayout';
-import { PublicLayout } from './layouts/PublicLayout';
+import { SiteLayout } from './layouts/SiteLayout';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardHomePage } from './pages/dashboard/DashboardHomePage';
-import { HomePage } from './pages/HomePage';
+import { LandingPage } from './pages/landing/LandingPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { BrandsPage } from './pages/shop/BrandsPage';
+import { ProductPage } from './pages/shop/ProductPage';
+import { ShopPage } from './pages/shop/ShopPage';
 
 /** Each role's area: URL prefix and which role may enter it. */
 const ROLE_AREAS = [
@@ -18,17 +21,22 @@ const ROLE_AREAS = [
 ] as const;
 
 /**
- * Route tree. Keying <Routes> by the path lets <AnimatePresence> play the old page's exit
- * animation before the new page enters (see PageTransition).
+ * Route tree. Keying by the first path segment lets <AnimatePresence> animate between
+ * sections (home -> shop -> login) while moving inside a section stays instant.
  */
 export function App() {
   const location = useLocation();
+  const section = location.pathname.split('/')[1] || 'home';
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route element={<PublicLayout />}>
-          <Route index element={<HomePage />} />
+      <Routes location={location} key={section}>
+        <Route element={<SiteLayout />}>
+          <Route index element={<LandingPage />} />
+          <Route path="shop" element={<ShopPage />} />
+          <Route path="shop/:id" element={<ProductPage />} />
+          <Route path="brands" element={<BrandsPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         <Route element={<PublicOnlyRoute />}>
@@ -43,10 +51,6 @@ export function App() {
             </Route>
           </Route>
         ))}
-
-        <Route element={<PublicLayout />}>
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
       </Routes>
     </AnimatePresence>
   );

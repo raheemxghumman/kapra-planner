@@ -102,9 +102,11 @@ export class ProductsService {
     }
     qb.addOrderBy('product.id');
 
+    // limit/offset (not take/skip): every join here is many-to-one, so rows cannot repeat, and
+    // take/skip would wrap the query in SELECT DISTINCT, which cannot ORDER BY an expression.
     const [data, total] = await qb
-      .skip((query.page - 1) * query.limit)
-      .take(query.limit)
+      .offset((query.page - 1) * query.limit)
+      .limit(query.limit)
       .getManyAndCount();
     return paginate(data, total, query);
   }
@@ -136,7 +138,7 @@ export class ProductsService {
       .setParameter('colours', product.colours)
       .addOrderBy('abs(product.price - :price)', 'ASC')
       .setParameter('price', product.price)
-      .take(limit)
+      .limit(limit)
       .getMany();
   }
 
@@ -146,7 +148,7 @@ export class ProductsService {
       .andWhere("cardinality(product.images) >= 2")
       .andWhere("product.category IN ('kurta', 'dress', 'suit', 'top', 'unstitched')")
       .orderBy('random()')
-      .take(limit)
+      .limit(limit)
       .getMany();
   }
 

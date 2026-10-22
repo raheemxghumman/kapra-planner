@@ -13,16 +13,31 @@
   --color-muted: #7a746b;
   --color-olive: #4f5a3a;
   --color-blush: #e8c9c0;
+  --color-henna: #8c3b2e;
+  --color-sand: #d9cfbf;
 
   --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
   --font-logo: 'Bodoni Moda', Georgia, serif;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-silk: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --animate-marquee: marquee 40s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 @layer base {
   html {
     @apply bg-paper text-ink antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   body {
@@ -30,8 +45,62 @@
   }
 
   ::selection {
-    @apply bg-olive text-paper;
+    @apply bg-henna text-paper;
   }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-olive;
+  }
+
+  img {
+    @apply select-none;
+  }
+}
+
+@layer utilities {
+  /* Small caps label used across the site ("— 01 PLAN"). */
+  .eyebrow {
+    @apply text-[11px] font-semibold tracking-[0.22em] uppercase;
+  }
+
+  /* Paper grain: a tiny SVG noise pattern laid over everything, like printed paper. */
+  .grain::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Lenis smooth scrolling (required styles). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Leaflet map tiles inherit our paper tone a little. */
+.leaflet-container {
+  @apply font-sans;
+  background: var(--color-sand);
 }
 
 /* Respect users who ask the system for less motion. */
@@ -40,6 +109,8 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { RolePicker } from '../../components/auth/RolePicker';
 import { Button } from '../../components/ui/Button';
 import { FormError } from '../../components/ui/FormError';
@@ -43,9 +43,13 @@ const NAME_LABEL: Record<RegisterValues['role'], string> = {
 export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const requestedRole = params.get('role');
+  const initialRole: RegisterValues['role'] =
+    requestedRole === 'brand' || requestedRole === 'tailor' ? requestedRole : 'customer';
 
   const form = useForm<RegisterValues>({
-    initialValues: { role: 'customer', name: '', email: '', password: '', phone: '', city: '' },
+    initialValues: { role: initialRole, name: '', email: '', password: '', phone: '', city: '' },
     validate,
     onSubmit: async ({ phone, city, ...values }) => {
       const user = await register({

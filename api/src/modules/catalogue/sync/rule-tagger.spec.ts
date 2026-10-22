@@ -53,6 +53,11 @@ describe('rule tagger', () => {
     expect(tagByRules(product({ title: 'Chiffon Dupatta' }), WOMEN_EASTERN).category).toBe(ProductCategory.Dupatta);
   });
 
+  it('reads the title before tags that list several sections', () => {
+    const shirt = product({ title: 'Embroidered Lawn Shirt', tags: ['Shirts', 'Trousers', '2 Piece'] });
+    expect(tagByRules(shirt, WOMEN_EASTERN).category).toBe(ProductCategory.Kurta);
+  });
+
   it('finds occasions from fabric and keywords, defaulting to casual', () => {
     expect(tagByRules(product({ title: 'Embroidered Chiffon Bridal Lehenga' }), WOMEN_EASTERN).occasions).toEqual(
       expect.arrayContaining([Occasion.Wedding, Occasion.Formal]),

@@ -102,11 +102,26 @@ export function detectColours(product: FeedProduct): Colour[] {
   return [...found].slice(0, 4);
 }
 
+/**
+ * Category from the most specific source first: the title, then the brand's product type,
+ * then tags. Tags often list every section a product belongs to ("Shirts, Trousers, 2 Piece"),
+ * so reading them first would turn single shirts into suits.
+ */
+export function categoryOf(product: FeedProduct): ProductCategory {
+  if (/\bun-?stitched\b/.test(productText(product))) return ProductCategory.Unstitched;
+  const tags = Array.isArray(product.tags) ? product.tags.join(' ') : product.tags;
+  for (const source of [product.title, product.product_type, tags]) {
+    const text = normalise(source ?? '');
+    const match = CATEGORY_RULES.find(([pattern]) => pattern.test(text));
+    if (match) return match[1];
+  }
+  return ProductCategory.Other;
+}
+
 /** Maps a raw feed product onto our taxonomy using keyword rules. Fast, free and deterministic. */
 export function tagByRules(product: FeedProduct, defaults: BrandDefaults): RuleTags {
   const text = productText(product);
-
-  const category = CATEGORY_RULES.find(([pattern]) => pattern.test(text))?.[1] ?? ProductCategory.Other;
+  const category = categoryOf(product);
 
   let style = defaults.style;
   if (EASTERN_WORDS.test(text)) style = WearStyle.Eastern;

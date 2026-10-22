@@ -7,6 +7,7 @@ import { ProductCategory } from '../catalogue.enums.js';
 import { ProductVariant } from '../entities/product-variant.entity.js';
 import { Product } from '../entities/product.entity.js';
 import { AiTaggerService } from './ai-tagger.service.js';
+import { cleanTitle } from './clean-title.js';
 import { shouldImport, tagByRules } from './rule-tagger.js';
 
 /** Enough variety for the stylist while staying well inside the free 500 MB database. */
@@ -155,7 +156,7 @@ export class CatalogueSyncService {
     return {
       brandId: brand.id,
       externalId: String(item.id),
-      title: item.title.slice(0, 200),
+      title: cleanTitle(item.title),
       description: stripHtml(item.body_html),
       brandCategory: item.product_type?.slice(0, 80) || null,
       ...tags,
