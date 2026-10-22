@@ -8,32 +8,32 @@ import { useLocation } from 'react-router';
  * the normal cursor is never hidden, so nothing becomes harder to use.
  */
 export function CustomCursor() {
-  const [enabled, setEnabled] = useState(false);
-  const [label, setLabel] = useState<string | null>(null);
+  // Decided once: only devices with a precise pointer (mouse) and no reduced-motion preference.
+  const [enabled] = useState(
+    () =>
+      window.matchMedia('(pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   const { pathname } = useLocation();
+  // The label belongs to the page it was set on, so it disappears by itself after navigation.
+  const [hover, setHover] = useState<{ label: string | null; path: string }>({ label: null, path: pathname });
+  const label = hover.path === pathname ? hover.label : null;
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
   const springX = useSpring(x, { stiffness: 500, damping: 40, mass: 0.4 });
   const springY = useSpring(y, { stiffness: 500, damping: 40, mass: 0.4 });
 
   useEffect(() => {
-    const finePointer = window.matchMedia('(pointer: fine)').matches;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!finePointer || reduced) return;
-    setEnabled(true);
-
+    if (!enabled) return;
     const move = (event: PointerEvent) => {
       x.set(event.clientX);
       y.set(event.clientY);
       const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-cursor]');
-      setLabel(target?.dataset.cursor ?? null);
+      setHover({ label: target?.dataset.cursor ?? null, path: window.location.pathname });
     };
     window.addEventListener('pointermove', move);
     return () => window.removeEventListener('pointermove', move);
-  }, [x, y]);
-
-  // A new page may not have the element the cursor was over; clear the label.
-  useEffect(() => setLabel(null), [pathname]);
+  }, [enabled, x, y]);
 
   if (!enabled) return null;
 

@@ -33,9 +33,11 @@ interface CardProps {
 }
 
 function Card({ url, angle, index, geometry }: CardProps) {
-  const texture = useTexture(imageUrl(url, 520));
-  texture.colorSpace = SRGBColorSpace;
-  texture.anisotropy = 8;
+  // Configure the texture in the loader callback (not after the hook returns it).
+  const texture = useTexture(imageUrl(url, 520), (loaded) => {
+    loaded.colorSpace = SRGBColorSpace;
+    loaded.anisotropy = 8;
+  });
   const mesh = useRef<Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const baseY = (index % 2 === 0 ? 0.18 : -0.18);

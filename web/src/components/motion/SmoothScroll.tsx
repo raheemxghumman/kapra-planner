@@ -5,7 +5,7 @@ import { useLocation } from 'react-router';
 let lenis: Lenis | null = null;
 
 /** Scrolls to the top instantly (used on page changes) whether or not Lenis is running. */
-export function scrollToTop(): void {
+function scrollToTop(): void {
   if (lenis) lenis.scrollTo(0, { immediate: true });
   else window.scrollTo(0, 0);
 }
