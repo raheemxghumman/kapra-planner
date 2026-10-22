@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+/*
+ * Kapra design tokens. Tailwind turns each --color-* into classes such as
+ * bg-paper, text-ink, border-hairline; --font-* into font-sans / font-logo.
+ */
+@theme {
+  --color-paper: #ece7de;
+  --color-card: #f4f1ea;
+  --color-hairline: #cfc8bc;
+  --color-stone: #a69e91;
+  --color-ink: #2b2926;
+  --color-muted: #7a746b;
+  --color-olive: #4f5a3a;
+  --color-blush: #e8c9c0;
+
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-logo: 'Bodoni Moda', Georgia, serif;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    @apply bg-paper text-ink antialiased;
+  }
+
+  body {
+    @apply min-h-screen font-sans;
+  }
+
+  ::selection {
+    @apply bg-olive text-paper;
+  }
+}
+
+/* Respect users who ask the system for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
