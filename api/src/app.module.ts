@@ -25,6 +25,9 @@ import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { PaymentsModule } from './modules/payments/payments.module.js';
 import { BookingsModule } from './modules/bookings/bookings.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
+import { BrandPanelModule } from './modules/brand-panel/brand-panel.module.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { StorageModule } from './integrations/storage/storage.module.js';
 import { WishlistModule } from './modules/wishlist/wishlist.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -68,6 +71,9 @@ import { UsersModule } from './modules/users/users.module.js';
     NotificationsModule,
     PaymentsModule,
     BookingsModule,
+    OrdersModule,
+    BrandPanelModule,
+    AdminModule,
   ],
   providers: [
     // Guards run in this order: rate limit -> valid JWT (unless @Public) -> role check.

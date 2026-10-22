@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import type { PaginationQueryDto, Paginated } from '../../common/dto/pagination.dto.js';
 import { GEOCODER, type Geocoder } from '../../integrations/geocoding/geocoder.types.js';
+import { locateAddress } from '../../integrations/geocoding/locate-address.js';
 import {
   IMAGE_STORAGE,
   type ImageStorage,
@@ -81,7 +82,7 @@ export class TailorPanelService {
     if (existing && existing.address === dto.address && existing.city === dto.city) {
       return { lat: existing.lat, lng: existing.lng };
     }
-    const [place] = await this.geocoder.search(`${dto.address}, ${dto.city}`, 1);
+    const place = await locateAddress(this.geocoder, dto.address, dto.city);
     if (!place) {
       throw new UnprocessableEntityException(
         'We could not find this address on the map. Drop a pin on the map instead.',

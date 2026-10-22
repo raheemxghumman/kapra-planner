@@ -67,6 +67,10 @@ export class Product extends BaseEntity {
   isActive: boolean;
 
   /** True once the AI tagger has refined colours, occasions and category. */
+  /** Hidden by the brand from its panel; unlike isActive, the feed sync never changes it. */
+  @Column({ name: 'hidden_by_brand', default: false })
+  hiddenByBrand: boolean;
+
   @Column({ name: 'ai_tagged', default: false })
   aiTagged: boolean;
 

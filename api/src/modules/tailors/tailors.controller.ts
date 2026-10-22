@@ -1,15 +1,11 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
   HttpCode,
   HttpStatus,
-  MaxFileSizeValidator,
   Param,
-  ParseFilePipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Patch,
@@ -21,6 +17,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { imageFilePipe, MAX_IMAGE_BYTES } from '../../common/pipes/image-file.pipe.js';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto.js';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -40,8 +37,6 @@ import {
 import { TailorRankingService } from './ranking/tailor-ranking.service.js';
 import { TailorPanelService } from './tailor-panel.service.js';
 import { TailorsService } from './tailors.service.js';
-
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 @ApiTags('tailors')
 @Public()
@@ -93,20 +88,7 @@ export class TailorPanelController {
     schema: { type: 'object', properties: { photo: { type: 'string', format: 'binary' } } },
   })
   @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: MAX_IMAGE_BYTES, files: 1 } }))
-  addPhoto(
-    @CurrentUser() user: User,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: MAX_IMAGE_BYTES }),
-          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
-        ],
-        exceptionFactory: () =>
-          new BadRequestException('Upload a JPEG, PNG or WebP photo of up to 8 MB'),
-      }),
-    )
-    file: Express.Multer.File,
-  ) {
+  addPhoto(@CurrentUser() user: User, @UploadedFile(imageFilePipe()) file: Express.Multer.File) {
     return this.panel.addGalleryImage(user.id, file);
   }
 

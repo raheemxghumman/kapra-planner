@@ -165,6 +165,7 @@ export class ProductsService {
       .innerJoin('product.brand', 'brand')
       .select(CARD_COLUMNS)
       .where('product.isActive = true')
+      .andWhere('product.hiddenByBrand = false')
       .andWhere('brand.verified = true');
   }
 
@@ -236,7 +237,7 @@ export class ProductsService {
 
   async findById(id: string): Promise<Product> {
     const product = await this.products.findOne({
-      where: { id, brand: { verified: true } },
+      where: { id, isActive: true, hiddenByBrand: false, brand: { verified: true } },
       relations: { brand: true, variants: true },
       order: { variants: { createdAt: 'ASC' } },
     });
@@ -280,7 +281,7 @@ export class ProductsService {
     if (this.facetsCache && this.facetsCache.expiresAt > Date.now()) {
       return this.facetsCache.value;
     }
-    const active = `FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active AND b.verified`;
+    const active = `FROM products p JOIN brands b ON b.id = p.brand_id WHERE p.is_active AND NOT p.hidden_by_brand AND b.verified`;
     const [categories, brands, colours, range] = await Promise.all([
       this.products.query(
         `SELECT p.category AS value, count(*)::int AS count ${active} GROUP BY 1 ORDER BY 2 DESC`,

@@ -1,21 +1,18 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
   HttpCode,
   HttpStatus,
-  MaxFileSizeValidator,
   Param,
-  ParseFilePipe,
   ParseUUIDPipe,
   Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { imageFilePipe, MAX_IMAGE_BYTES } from '../../common/pipes/image-file.pipe.js';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
@@ -26,8 +23,6 @@ import { CreateTryOnDto } from './dto/try-on.dto.js';
 import type { PersonPhoto } from './entities/person-photo.entity.js';
 import type { TryOn } from './entities/try-on.entity.js';
 import { TryOnService } from './try-on.service.js';
-
-const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
 @ApiTags('try-on')
 @ApiBearerAuth()
@@ -48,21 +43,10 @@ export class PersonPhotosController {
   @ApiBody({
     schema: { type: 'object', properties: { photo: { type: 'string', format: 'binary' } } },
   })
-  @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: MAX_PHOTO_BYTES, files: 1 } }))
+  @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: MAX_IMAGE_BYTES, files: 1 } }))
   upload(
     @CurrentUser() user: User,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: MAX_PHOTO_BYTES }),
-          // Checks the file's real content (magic bytes), not just its name.
-          new FileTypeValidator({ fileType: /^image\/(jpeg|png|webp)$/ }),
-        ],
-        exceptionFactory: () =>
-          new BadRequestException('Upload a JPEG, PNG or WebP photo of up to 8 MB'),
-      }),
-    )
-    file: Express.Multer.File,
+    @UploadedFile(imageFilePipe()) file: Express.Multer.File,
   ): Promise<PersonPhoto> {
     return this.tryOnService.uploadPhoto(user.id, file);
   }
