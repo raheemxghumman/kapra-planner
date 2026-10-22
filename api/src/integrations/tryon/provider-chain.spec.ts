@@ -16,14 +16,15 @@ const provider = (name: string, run: () => Promise<Blob>): TryOnProvider => ({
 
 describe('runProviderChain', () => {
   it('uses the first provider when it succeeds and never calls the next', async () => {
-    const second = provider('second', () => Promise.resolve(image));
+    const secondRun = vi.fn(() => Promise.resolve(image));
+    const second: TryOnProvider = { name: 'second', run: secondRun };
     const result = await runProviderChain(
       [provider('first', () => Promise.resolve(image)), second],
       input,
       1000,
     );
     expect(result).toEqual({ provider: 'first', image });
-    expect(second.run).not.toHaveBeenCalled();
+    expect(secondRun).not.toHaveBeenCalled();
   });
 
   it('falls back to the next provider when one fails', async () => {

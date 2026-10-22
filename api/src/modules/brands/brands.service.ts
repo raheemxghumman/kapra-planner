@@ -13,6 +13,20 @@ export interface BrandSummary {
   website: string | null;
   logoUrl: string | null;
   productCount: number;
+  /** Sells on Kapra (an approved brand account manages it); otherwise catalogue only. */
+  partner: boolean;
+}
+
+export interface StorePin {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  lat: number;
+  lng: number;
+  brandName: string;
+  brandSlug: string;
+  logoUrl: string | null;
 }
 
 export const slugify = (name: string) =>
@@ -41,11 +55,22 @@ export class BrandsService {
         'brand.website AS website',
         'brand.logo_url AS "logoUrl"',
         'count(p.id)::int AS "productCount"',
+        '(brand.owner_id IS NOT NULL) AS partner',
       ])
       .where('brand.verified = true')
       .groupBy('brand.id')
       .orderBy('brand.name')
       .getRawMany<BrandSummary>();
+  }
+
+  /** Every store of a verified brand, for the map. */
+  stores(): Promise<StorePin[]> {
+    return this.brands.manager.query(
+      `SELECT s.id, s.name, s.address, s.city, s.lat, s.lng,
+              b.name AS "brandName", b.slug AS "brandSlug", b.logo_url AS "logoUrl"
+       FROM brand_stores s JOIN brands b ON b.id = s.brand_id
+       WHERE b.verified ORDER BY b.name, s.name`,
+    );
   }
 
   async findBySlug(slug: string): Promise<Brand> {

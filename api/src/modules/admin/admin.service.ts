@@ -96,7 +96,8 @@ export class AdminService {
         [user.id],
       );
     }
-    return { ...user, status } as User;
+    // Object.assign keeps the User class, so @Exclude still hides private fields.
+    return Object.assign(user, { status });
   }
 
   /** Activates a pending brand or tailor account and tells them. */
@@ -111,7 +112,7 @@ export class AdminService {
           : 'You can now sell on Kapra.',
       link: user.role === UserRole.Tailor ? '/tailor' : '/brand',
     });
-    return { ...user, status: UserStatus.Active } as User;
+    return Object.assign(user, { status: UserStatus.Active });
   }
 
   /** Links a brand account to a brand (or unlinks it). Linking also approves the account. */
@@ -154,6 +155,6 @@ export class AdminService {
     if (!review) throw new NotFoundException('Review not found');
     await this.reviews.update(review.id, { isHidden: hidden });
     await this.ranking.recomputeAll();
-    return { ...review, isHidden: hidden } as Review;
+    return Object.assign(review, { isHidden: hidden });
   }
 }

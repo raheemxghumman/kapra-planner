@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
 import { UserRole } from '../../common/enums/user-role.enum.js';
-import { BrandsService, type BrandSummary } from './brands.service.js';
+import { BrandsService, type BrandSummary, type StorePin } from './brands.service.js';
 import { CreateBrandDto, UpdateBrandDto } from './dto/brand.dto.js';
 import type { Brand } from './entities/brand.entity.js';
 
@@ -16,6 +16,13 @@ export class BrandsController {
   @Get()
   list(): Promise<BrandSummary[]> {
     return this.brandsService.listPublic();
+  }
+
+  /** Store locations for the map. Declared before ':slug' so "stores" is not read as a slug. */
+  @Public()
+  @Get('stores')
+  stores(): Promise<StorePin[]> {
+    return this.brandsService.stores();
   }
 
   @Public()

@@ -102,7 +102,9 @@ export class TailorPanelService {
 
   async addService(userId: string, dto: CreateTailorServiceDto): Promise<TailorService> {
     const tailor = await this.requireOwn(userId);
-    const service = await this.services.save(this.services.create({ ...dto, tailorId: tailor.id }));
+    const service = await this.services.save(
+      Object.assign(this.services.create(dto), { tailorId: tailor.id }),
+    );
     await this.refreshPriceFrom(tailor.id);
     return service;
   }

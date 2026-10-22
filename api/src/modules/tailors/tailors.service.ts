@@ -126,7 +126,7 @@ export class TailorsService {
       stars,
       count: breakdown.find((row) => Number(row.stars) === stars)?.count ?? 0,
     }));
-    return { ...tailor, services, ratingBreakdown, reviews: reviews.data };
+    return Object.assign(tailor, { services, ratingBreakdown, reviews: reviews.data });
   }
 
   async reviewsBySlug(slug: string, query: PaginationQueryDto): Promise<Paginated<PublicReview>> {

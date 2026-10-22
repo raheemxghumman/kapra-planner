@@ -150,7 +150,7 @@ export class BrandPanelService {
     const product = await this.ownProduct(userId, id);
     await this.products.update(product.id, { hiddenByBrand: hidden });
     this.productsService.clearFacetsCache();
-    return { ...product, hiddenByBrand: hidden };
+    return Object.assign(product, { hiddenByBrand: hidden });
   }
 
   async updateStock(

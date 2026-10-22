@@ -44,7 +44,7 @@ export class ProfilesService {
         `You can keep up to ${MAX_MEASUREMENT_PROFILES} measurement profiles`,
       );
     }
-    return this.measurements.save(this.measurements.create({ ...dto, userId }));
+    return this.measurements.save(Object.assign(this.measurements.create(dto), { userId }));
   }
 
   async updateMeasurement(

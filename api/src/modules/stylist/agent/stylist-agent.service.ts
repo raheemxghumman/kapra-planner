@@ -314,7 +314,9 @@ export class StylistAgentService {
 
     submitted.slice(0, 3).forEach((outfit, index) => {
       const label = `Outfit ${index + 1}`;
-      const ids = (outfit.items ?? []).map((item) => String(item.productId ?? ''));
+      const ids = (outfit.items ?? []).map((item) =>
+        typeof item.productId === 'string' ? item.productId : '',
+      );
       const unknown = ids.filter((id) => !seen.has(id));
       if (unknown.length) {
         problems.push(
