@@ -57,7 +57,7 @@ export function ShowcaseSection() {
   return (
     <section ref={ref} className="relative overflow-hidden bg-ink py-28 text-paper md:py-36">
       <div className="mx-auto max-w-[1400px] px-5 md:px-10">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-end">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-end">
           <div>
             <p className="eyebrow text-paper/50">Inside Kapra</p>
             <h2 className="mt-4 text-[clamp(2.4rem,5vw,4.6rem)] leading-[0.98] tracking-[-0.03em]">
@@ -81,7 +81,7 @@ export function ShowcaseSection() {
           </div>
         </div>
 
-        <div className="mt-16 grid gap-12 lg:grid-cols-[320px_1fr] lg:items-center">
+        <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-[320px_1fr] lg:items-center">
           <AnimatePresence mode="wait">
             <motion.div key={role.key} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.4 }}>
               <p className="font-logo text-4xl leading-tight italic">{role.title}</p>

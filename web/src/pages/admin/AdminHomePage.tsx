@@ -42,7 +42,7 @@ export function AdminHomePage() {
         <Stat label="Stylist requests" value={stylistTotal} icon={<Bot size={16} />} note={`${stylistTotal ? Math.round((s.ai.stylistAi / stylistTotal) * 100) : 0}% by AI · avg ${s.ai.stylistAvgMs ? (s.ai.stylistAvgMs / 1000).toFixed(1) : '—'} s`} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
         <Panel eyebrow="Last 14 days" title="Payments per day">
           <BarChart data={s.daily.map((row) => ({ label: new Date(row.day).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }), value: row.revenue }))} format={formatPrice} height={170} />
         </Panel>
@@ -76,7 +76,7 @@ export function AdminHomePage() {
         </Panel>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Panel eyebrow="Bookings" title="By status" delay={0.1}>
           <BreakdownBars items={s.bookings.map((row) => ({ label: BOOKING_STATUS_LABEL[row.status as BookingStatus] ?? row.status, value: row.count }))} />
         </Panel>

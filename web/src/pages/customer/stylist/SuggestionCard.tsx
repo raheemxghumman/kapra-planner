@@ -37,7 +37,7 @@ export function SuggestionCard({ suggestion, budget, index }: { suggestion: Outf
       transition={{ duration: 0.8, delay: index * 0.15, ease: [0.22, 1, 0.36, 1] }}
       className="overflow-hidden rounded-[26px] border border-hairline bg-card"
     >
-      <div className="grid gap-0 md:grid-cols-[1.05fr_1fr]">
+      <div className="grid grid-cols-1 gap-0 md:grid-cols-[1.05fr_1fr]">
         <div className="bg-[#e3dccf] p-5">
           <OutfitBoard items={suggestion.items} />
         </div>

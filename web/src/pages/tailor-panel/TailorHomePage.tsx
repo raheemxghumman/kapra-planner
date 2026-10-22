@@ -63,7 +63,7 @@ export function TailorHomePage() {
         <Stat label="Kapra score" value={profile.rankScore * 100} icon={<Trophy size={16} />} note="Rating, review words and reliability" />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Panel eyebrow="Needs you" title="New booking requests" actions={<Link to="/tailor/bookings" className="text-sm text-muted hover:text-ink">All bookings</Link>}>
           {requested.loading ? (
             <Skeleton className="h-40" />

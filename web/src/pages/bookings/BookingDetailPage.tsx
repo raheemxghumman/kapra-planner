@@ -142,14 +142,14 @@ export function BookingDetailPage() {
         <div className="mt-6 rounded-2xl bg-blush/40 px-5 py-4 text-sm text-henna">Your refund of {formatPrice(item.payment.amount)} is being processed by Stripe.</div>
       )}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_400px]">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_400px]">
         <div className="space-y-6">
           <Panel eyebrow="Tracking" title="Where it is now">
             <BookingTimeline booking={item} />
           </Panel>
 
           <Panel eyebrow="Details" title="The booking" delay={0.06}>
-            <dl className="grid gap-5 sm:grid-cols-2">
+            <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Detail icon={CalendarDays} label={item.handoff === 'home_visit' ? 'Home visit' : 'Drop-off'} value={formatDateTime(item.appointmentAt)} />
               {item.handoff === 'home_visit' ? (
                 <Detail icon={Home} label="Visit address" value={item.address ?? '—'} />
@@ -166,7 +166,7 @@ export function BookingDetailPage() {
 
           {(item.tryOn?.resultUrl || item.product || item.outfit) && (
             <Panel eyebrow="To stitch" title="The look" delay={0.1}>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {item.tryOn?.resultUrl && (
                   <figure>
                     <img src={item.tryOn.resultUrl} alt="Try-on" className="aspect-[3/4] w-full rounded-2xl object-cover" />

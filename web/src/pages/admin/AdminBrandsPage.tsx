@@ -69,7 +69,7 @@ export function AdminBrandsPage() {
       {brands.loading ? (
         <Skeleton className="h-96" />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {brands.data?.map((brand, index) => {
             const report = brand.lastSyncReport;
             return (

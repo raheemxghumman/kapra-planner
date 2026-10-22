@@ -32,7 +32,7 @@ export function PartnersSection({ products }: { products: Product[] }) {
   return (
     <section className="mx-auto max-w-[1400px] px-5 py-28 md:px-10">
       <p className="eyebrow text-muted">Partners</p>
-      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {PANELS.map((panel, index) => (
           <motion.article
             key={panel.role}

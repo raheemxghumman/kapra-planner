@@ -47,7 +47,7 @@ export function BrandHomePage() {
             <Stat label="Saved by shoppers" value={data.interest.wishlistSaves} icon={<Heart size={16} />} />
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
             <Panel eyebrow="Daily revenue" title="Last 30 days">
               <BarChart data={data.daily.map((row) => ({ label: new Date(row.day).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' }), value: row.revenue }))} format={formatPrice} height={180} />
             </Panel>
@@ -63,7 +63,7 @@ export function BrandHomePage() {
             </Panel>
           </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
             <Panel eyebrow="Best sellers" title="Top products" delay={0.1}>
               {data.topProducts.length === 0 ? (
                 <p className="text-sm text-muted">Your best sellers will appear here after the first orders.</p>

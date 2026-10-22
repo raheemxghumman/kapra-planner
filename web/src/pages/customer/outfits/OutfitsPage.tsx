@@ -17,7 +17,7 @@ export function OutfitsPage() {
       <PageHeader eyebrow="Wardrobe" title="Your saved" accent="looks" actions={<ButtonLink to="/app/stylist">New look</ButtonLink>} />
       {outfits.error && <ErrorNote message={outfits.error} onRetry={outfits.reload} />}
       {outfits.loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((key) => (
             <Skeleton key={key} className="h-80" />
           ))}
@@ -25,7 +25,7 @@ export function OutfitsPage() {
       ) : outfits.data?.length === 0 ? (
         <EmptyState title="No saved looks" description="Ask the AI stylist for a few ideas and keep the ones you love." action={<ButtonLink to="/app/stylist">Style me</ButtonLink>} />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {outfits.data?.map((outfit, index) => {
             const total = outfit.items.reduce((sum, item) => sum + item.product.price, 0);
             return (

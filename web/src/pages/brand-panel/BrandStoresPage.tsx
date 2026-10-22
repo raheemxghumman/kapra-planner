@@ -57,7 +57,7 @@ export function BrandStoresPage() {
   return (
     <div>
       <PageHeader eyebrow="Brand" title={brand.name} accent="& stores" />
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.2fr]">
         <Panel eyebrow="Profile" title="About the brand">
           <div className="space-y-4">
             <div className="flex items-center gap-4">

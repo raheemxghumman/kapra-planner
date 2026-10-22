@@ -46,7 +46,7 @@ export function CheckoutPage() {
   return (
     <div>
       <PageHeader eyebrow="Checkout" title="Order from" accent={group.brandName} />
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
         <Panel eyebrow="Delivery" title="Where should it go?">
           <form
             onSubmit={(event) => {
@@ -54,7 +54,7 @@ export function CheckoutPage() {
               setTouched(true);
               if (valid) pay.run();
             }}
-            className="grid gap-4 sm:grid-cols-2"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
           >
             <TextField label="Receiver’s name" value={shipping.name} error={touched ? errors.name : undefined} onChange={(event) => setShipping({ ...shipping, name: event.target.value })} />
             <TextField label="Mobile" placeholder="03001234567" value={shipping.phone} error={touched ? errors.phone : undefined} onChange={(event) => setShipping({ ...shipping, phone: event.target.value })} />

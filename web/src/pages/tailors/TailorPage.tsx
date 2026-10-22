@@ -68,7 +68,7 @@ export function TailorPage() {
         ← All tailors
       </Link>
 
-      <header className="mt-6 grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-end">
+      <header className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[auto_1fr_auto] lg:items-end">
         <motion.div initial={{ scale: 0.8, rotate: -8, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 16 }} className="grid h-36 w-36 place-items-center rounded-[36px] bg-ink font-logo text-6xl text-paper italic">
           {monogram}
         </motion.div>
@@ -97,7 +97,7 @@ export function TailorPage() {
         </div>
       </header>
 
-      <div className="mt-12 grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+      <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-12">
           {t.bio && <p className="text-lg leading-relaxed text-ink/80">{t.bio}</p>}
 
@@ -130,7 +130,7 @@ export function TailorPage() {
             <h2 className="text-2xl">
               What customers <span className="font-logo italic">say</span>
             </h2>
-            <div className="mt-5 grid gap-6 sm:grid-cols-[200px_1fr]">
+            <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-[200px_1fr]">
               <div>
                 <p className="font-logo text-6xl leading-none italic">{t.ratingAvg.toFixed(1)}</p>
                 <Stars value={t.ratingAvg} size={16} className="mt-2" />

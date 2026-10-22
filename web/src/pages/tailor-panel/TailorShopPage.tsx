@@ -95,12 +95,12 @@ export function TailorShopPage() {
     <div>
       <PageHeader eyebrow="My shop" title="How customers" accent="see you" />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr]">
         <Panel eyebrow="Details" title="Shop profile">
           <div className="space-y-4">
             <TextField label="Shop name" value={form.businessName} onChange={(event) => update({ businessName: event.target.value })} />
             <TextAreaField label="About your shop" value={form.bio ?? ''} maxLength={1000} onChange={(event) => update({ bio: event.target.value })} placeholder="Years of experience, what you are known for" />
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <TextField label="Shop phone" value={form.phone} onChange={(event) => update({ phone: event.target.value })} placeholder="03001234567" />
               <TextField label="Usual turnaround (days)" inputMode="numeric" value={String(form.turnaroundDays)} onChange={(event) => update({ turnaroundDays: Math.min(60, Number(event.target.value.replace(/\D/g, '')) || 1) })} />
             </div>

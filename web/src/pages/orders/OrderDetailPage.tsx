@@ -101,7 +101,7 @@ export function OrderDetailPage() {
         </div>
       </header>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           {item.status !== 'cancelled' && item.status !== 'pending_payment' && (
             <Panel eyebrow="Tracking" title="Delivery progress">

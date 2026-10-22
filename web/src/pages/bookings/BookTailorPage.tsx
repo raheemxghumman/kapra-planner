@@ -99,10 +99,10 @@ export function BookTailorPage() {
         Book <span className="font-logo italic">{t.businessName}</span>
       </h1>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
           <Step number={1} title="What do you need?">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {t.services.map((item) => (
                 <button key={item.id} type="button" onClick={() => setServiceId(item.id)} className={cn('rounded-2xl border p-4 text-left transition-all', item.id === serviceId ? 'border-ink bg-paper shadow-[inset_0_0_0_1px_var(--color-ink)]' : 'border-hairline hover:border-ink/50')}>
                   <p className="font-semibold">{item.name}</p>
@@ -115,7 +115,7 @@ export function BookTailorPage() {
           </Step>
 
           <Step number={2} title="How should the fabric reach the tailor?">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Choice active={handoff === 'drop_off'} onClick={() => setHandoff('drop_off')} icon={<Store size={18} />} title="I’ll drop it off" note={`${t.address}, ${t.city}`} />
               <Choice active={handoff === 'home_visit'} disabled={!t.homeVisits} onClick={() => setHandoff('home_visit')} icon={<Home size={18} />} title="Home visit" note={t.homeVisits ? 'Measured and collected at home' : 'Not offered by this tailor'} />
             </div>

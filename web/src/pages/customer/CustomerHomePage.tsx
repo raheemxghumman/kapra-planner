@@ -55,7 +55,7 @@ export function CustomerHomePage() {
         <p className="mt-3 text-muted">What are we dressing for today?</p>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {ACTIONS.map((action, index) => (
           <motion.div key={action.to} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 + index * 0.08, ease: [0.22, 1, 0.36, 1] }}>
             <TiltCard className="h-full">
@@ -95,7 +95,7 @@ export function CustomerHomePage() {
         </motion.div>
       )}
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-5">
+      <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-5">
         <Panel eyebrow="In progress" title="Bookings & orders" className="lg:col-span-3" delay={0.15}>
           {bookings.loading || orders.loading ? (
             <div className="space-y-3">

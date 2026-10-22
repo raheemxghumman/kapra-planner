@@ -94,7 +94,7 @@ export function TryOnPage() {
     <div>
       <PageHeader eyebrow="Virtual try-on" title="See it" accent="on you" description="Upload a full-length photo, pick a piece and our try-on model dresses you in it. Takes about half a minute." />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
         <div className="space-y-6">
           <Panel eyebrow="Step 1" title="Your photo" actions={<span className="flex items-center gap-1 text-xs text-muted"><Lock size={12} /> Only you can see it</span>}>
             {photos.loading ? (

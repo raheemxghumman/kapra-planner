@@ -79,7 +79,7 @@ export function RegisterPage() {
           hint="At least 8 characters with a letter and a number"
           {...form.field('password')}
         />
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <TextField
             label={isBusiness ? 'Mobile number' : 'Mobile (optional)'}
             type="tel"

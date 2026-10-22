@@ -94,8 +94,8 @@ export function TailorsPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 pt-20 pb-16 md:px-8">
-      <div className="grid gap-6 lg:grid-cols-[460px_1fr]">
-        <section>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[460px_1fr]">
+        <section className="min-w-0">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-[clamp(2.2rem,4vw,3.4rem)] leading-[1] tracking-[-0.03em]">
             Tailors <span className="font-logo italic">near you</span>
           </motion.h1>

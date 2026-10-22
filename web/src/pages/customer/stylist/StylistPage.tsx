@@ -71,7 +71,7 @@ export function StylistPage() {
         description="Complete looks from real, in-stock pieces across 12 Pakistani brands, in your size and within your budget."
       />
 
-      <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[360px_1fr]">
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="space-y-6 rounded-[24px] border border-hairline bg-card p-6">
             <AnimatePresence>
@@ -155,7 +155,7 @@ export function StylistPage() {
                     <p className="eyebrow mb-3 flex items-center gap-2 text-muted">
                       <History size={13} /> Earlier requests
                     </p>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {history.data.slice(0, 6).map((request) => (
                         <button
                           key={request.id}

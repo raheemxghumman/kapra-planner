@@ -63,7 +63,7 @@ export function ProfilePage() {
     <div>
       <PageHeader eyebrow="Profile" title="Sizes &" accent="taste" description="Your stylist and tailors work from this page." />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.3fr]">
         <Panel eyebrow="Account" title="Your details">
           <form
             onSubmit={(event) => {
@@ -143,7 +143,7 @@ export function ProfilePage() {
         ) : measurements.data?.length === 0 ? (
           <EmptyState title="No measurements yet" description="Save measurements for yourself or family members; you pick one when booking a tailor." action={<Button size="sm" onClick={() => setEditing('new')}>Add measurements</Button>} className="py-8" />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {measurements.data?.map((measurement, index) => (
               <motion.div key={measurement.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className="rounded-2xl border border-hairline bg-paper/50 p-4">
                 <div className="flex items-center justify-between">

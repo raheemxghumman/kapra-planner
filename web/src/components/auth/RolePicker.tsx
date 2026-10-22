@@ -24,7 +24,7 @@ export function RolePicker({ value, onChange }: RolePickerProps) {
       <legend className="mb-2 text-xs font-semibold tracking-[0.14em] text-muted uppercase">
         I am joining as
       </legend>
-      <div role="radiogroup" className="grid gap-2 sm:grid-cols-3">
+      <div role="radiogroup" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {OPTIONS.map((option) => {
           const selected = option.role === value;
           return (

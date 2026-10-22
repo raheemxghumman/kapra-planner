@@ -100,7 +100,7 @@ export function ShopPage() {
         </div>
       </header>
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[260px_1fr]">
+      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">
           <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2 no-scrollbar" data-lenis-prevent>
             {activeCount > 0 && (

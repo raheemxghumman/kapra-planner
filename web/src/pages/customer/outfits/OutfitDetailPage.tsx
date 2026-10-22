@@ -59,7 +59,7 @@ export function OutfitDetailPage() {
       <Link to="/app/outfits" className="eyebrow text-muted hover:text-ink">
         ← All looks
       </Link>
-      <div className="mt-4 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+      <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_1fr]">
         <div className="rounded-[28px] bg-[#e3dccf] p-6">
           <OutfitBoard items={current.items} />
         </div>
