@@ -8,7 +8,7 @@ import {
   type OnApplicationBootstrap,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { In, LessThan, MoreThan, Repository } from 'typeorm';
 import {
   IMAGE_STORAGE,
   type ImageStorage,
@@ -38,6 +38,8 @@ const GARMENT_FOR_SLOT: Partial<Record<OutfitSlot, GarmentType>> = {
 };
 
 const ACTIVE = [TryOnStatus.Pending, TryOnStatus.Processing];
+/** A job can take at most 2 providers x 3 minutes; one untouched for 10 minutes is dead. */
+const staleBefore = () => new Date(Date.now() - 10 * 60_000);
 
 async function download(url: string): Promise<Blob> {
   const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
@@ -61,10 +63,13 @@ export class TryOnService implements OnApplicationBootstrap {
     private readonly productsService: ProductsService,
   ) {}
 
-  /** Jobs that were running when the server stopped will never finish; mark them failed. */
+  /**
+   * Jobs that were running when the server stopped will never finish; mark them failed. Only
+   * stale ones: scripts that start the app (seeds, jobs) must not cancel a live server's jobs.
+   */
   async onApplicationBootstrap(): Promise<void> {
     await this.tryOns.update(
-      { status: In(ACTIVE), updatedAt: LessThan(new Date()) },
+      { status: In(ACTIVE), updatedAt: LessThan(staleBefore()) },
       { status: TryOnStatus.Failed, error: 'Interrupted by a server restart. Please try again.' },
     );
   }
@@ -122,7 +127,9 @@ export class TryOnService implements OnApplicationBootstrap {
     });
     if (cached) return cached;
 
-    if (await this.tryOns.existsBy({ userId, status: In(ACTIVE) })) {
+    if (
+      await this.tryOns.existsBy({ userId, status: In(ACTIVE), updatedAt: MoreThan(staleBefore()) })
+    ) {
       throw new ConflictException(
         'Your previous try-on is still running; please wait for it to finish',
       );

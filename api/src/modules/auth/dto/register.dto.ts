@@ -10,6 +10,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { SELF_REGISTER_ROLES, UserRole } from '../../../common/enums/user-role.enum.js';
+import { PHONE_MESSAGE, PHONE_PATTERN } from '../../../common/validation/patterns.js';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 const trimLower = ({ value }: { value: unknown }) =>
@@ -45,9 +46,7 @@ export class RegisterDto {
    */
   @ValidateIf((dto: RegisterDto) => dto.role !== UserRole.Customer || dto.phone !== undefined)
   @Transform(trim)
-  @Matches(/^(\+92|0)3\d{9}$/, {
-    message: 'phone must be a Pakistani mobile number like 03001234567',
-  })
+  @Matches(PHONE_PATTERN, { message: PHONE_MESSAGE })
   phone?: string;
 
   @IsOptional()

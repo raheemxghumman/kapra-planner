@@ -25,7 +25,9 @@
     "migration:run": "npm run build && npm run typeorm -- migration:run",
     "migration:revert": "npm run build && npm run typeorm -- migration:revert",
     "seed:admin": "npm run build && node dist/database/seeds/create-admin.js",
-    "seed:catalogue": "npm run build && node dist/database/seeds/seed-catalogue.js"
+    "seed:catalogue": "npm run build && node dist/database/seeds/seed-catalogue.js",
+    "seed:tailors": "npm run build && node dist/database/seeds/seed-tailors.js",
+    "job:reviews": "npm run build && node dist/jobs/score-reviews.js"
   },
   "dependencies": {
     "@gradio/client": "^2.7.1",
@@ -52,6 +54,7 @@
     "typeorm": "^1.1.2"
   },
   "devDependencies": {
+    "@huggingface/transformers": "^4.3.1",
     "@nestjs/cli": "^12.0.0",
     "@nestjs/mau": "^0.2.6",
     "@nestjs/schematics": "^12.0.0",

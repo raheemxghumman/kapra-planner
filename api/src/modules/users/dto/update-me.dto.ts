@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsOptional, IsString, Length, Matches } from 'class-validator';
+import { PHONE_MESSAGE, PHONE_PATTERN } from '../../../common/validation/patterns.js';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -13,9 +14,7 @@ export class UpdateMeDto {
 
   @IsOptional()
   @Transform(trim)
-  @Matches(/^(\+92|0)3\d{9}$/, {
-    message: 'phone must be a Pakistani mobile number like 03001234567',
-  })
+  @Matches(PHONE_PATTERN, { message: PHONE_MESSAGE })
   phone?: string;
 
   @IsOptional()

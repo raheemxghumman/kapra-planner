@@ -1,0 +1,55 @@
+name: Scheduled jobs
+
+# Background work that must not run inside the free web server:
+# - review sentiment with the pre-trained model, then tailor re-ranking (needs ~1 GB RAM)
+# - catalogue sync from the brands' shop feeds (calls the deployed API)
+# Each job skips itself until its secrets are added in Settings -> Secrets -> Actions.
+on:
+  schedule:
+    - cron: '30 21 * * *' # 02:30 Pakistan time, every night
+  workflow_dispatch: # "Run workflow" button for demos
+
+jobs:
+  review-sentiment:
+    name: Score review sentiment and re-rank tailors
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_SSL: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        if: env.DATABASE_URL != ''
+
+      - uses: actions/setup-node@v4
+        if: env.DATABASE_URL != ''
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The ~170 MB model is downloaded once and reused between runs.
+      - uses: actions/cache@v4
+        if: env.DATABASE_URL != ''
+        with:
+          path: node_modules/@huggingface/transformers/.cache
+          key: hf-sentiment-model-v1
+
+      - name: Install and build
+        if: env.DATABASE_URL != ''
+        run: npm ci && npm run build -w api
+
+      - name: Run sentiment job
+        if: env.DATABASE_URL != ''
+        run: node api/dist/jobs/score-reviews.js
+
+  catalogue-sync:
+    name: Sync brand catalogues
+    runs-on: ubuntu-latest
+    env:
+      API_URL: ${{ secrets.API_URL }}
+      JOBS_SECRET: ${{ secrets.JOBS_SECRET }}
+    steps:
+      - name: Start sync on the API
+        if: env.API_URL != '' && env.JOBS_SECRET != ''
+        run: |
+          curl --fail --silent --show-error -X POST "$API_URL/api/v1/jobs/sync" \
+            -H "x-jobs-secret: $JOBS_SECRET"

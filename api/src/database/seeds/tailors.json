@@ -1,0 +1,20 @@
+[
+  { "name": "Silai Ghar", "address": "Shop 14, Jinnah Super Market, F-7 Markaz", "city": "Islamabad", "lat": 33.7212, "lng": 73.0563, "specialities": ["women_eastern", "alterations"], "quality": 4.7, "reviews": 22, "homeVisits": true },
+  { "name": "Ustad Akram Tailors", "address": "Karachi Company, G-9 Markaz", "city": "Islamabad", "lat": 33.6884, "lng": 73.0302, "specialities": ["men_eastern", "alterations"], "quality": 4.4, "reviews": 31, "homeVisits": false },
+  { "name": "Mehr Bridal Couture", "address": "Blue Area, Jinnah Avenue", "city": "Islamabad", "lat": 33.7106, "lng": 73.0614, "specialities": ["bridal", "women_eastern"], "quality": 4.8, "reviews": 14, "homeVisits": true },
+  { "name": "Sui Dhaga Studio", "address": "F-10 Markaz, Main Double Road", "city": "Islamabad", "lat": 33.6952, "lng": 73.0127, "specialities": ["women_eastern", "kids"], "quality": 4.2, "reviews": 18, "homeVisits": false },
+  { "name": "The Alteration Bar", "address": "I-8 Markaz, Street 5", "city": "Islamabad", "lat": 33.6683, "lng": 73.0751, "specialities": ["alterations", "western"], "quality": 3.5, "reviews": 26, "homeVisits": false },
+  { "name": "Kaarigar Studio", "address": "E-11/2 Markaz", "city": "Islamabad", "lat": 33.6991, "lng": 72.9748, "specialities": ["women_eastern", "western"], "quality": 4.5, "reviews": 9, "homeVisits": true },
+  { "name": "Pindi Gents Tailors", "address": "Bank Road, Saddar", "city": "Rawalpindi", "lat": 33.5968, "lng": 73.0482, "specialities": ["men_eastern", "western"], "quality": 4.1, "reviews": 40, "homeVisits": false },
+  { "name": "Gota Kinari House", "address": "Commercial Market, Satellite Town", "city": "Rawalpindi", "lat": 33.6369, "lng": 73.0702, "specialities": ["bridal", "women_eastern"], "quality": 3.1, "reviews": 17, "homeVisits": false },
+  { "name": "Tanka Tailors", "address": "Spring North, Bahria Town Phase 7", "city": "Rawalpindi", "lat": 33.5284, "lng": 73.0928, "specialities": ["women_eastern", "men_eastern", "kids"], "quality": 4.3, "reviews": 12, "homeVisits": true },
+  { "name": "Fit Factory", "address": "Sector F, DHA Phase 2", "city": "Islamabad", "lat": 33.5302, "lng": 73.1603, "specialities": ["western", "alterations"], "quality": 4.6, "reviews": 5, "homeVisits": true },
+  { "name": "Rangrez Atelier", "address": "Liberty Market, Gulberg III", "city": "Lahore", "lat": 31.5101, "lng": 74.3442, "specialities": ["bridal", "women_eastern"], "quality": 4.9, "reviews": 28, "homeVisits": true },
+  { "name": "Zari Works", "address": "Y Block Market, DHA Phase 3", "city": "Lahore", "lat": 31.4752, "lng": 74.3790, "specialities": ["bridal"], "quality": 4.4, "reviews": 11, "homeVisits": false },
+  { "name": "Noor Stitching House", "address": "Main Boulevard, Johar Town", "city": "Lahore", "lat": 31.4693, "lng": 74.2728, "specialities": ["women_eastern", "kids", "alterations"], "quality": 4.0, "reviews": 33, "homeVisits": false },
+  { "name": "Anarkali Darzi Co.", "address": "Old Anarkali Food Street", "city": "Lahore", "lat": 31.5652, "lng": 74.3098, "specialities": ["men_eastern", "alterations"], "quality": 2.8, "reviews": 24, "homeVisits": false },
+  { "name": "Sartorial Lane", "address": "Link Road, Model Town", "city": "Lahore", "lat": 31.4831, "lng": 74.3282, "specialities": ["western", "men_eastern"], "quality": 4.5, "reviews": 15, "homeVisits": true },
+  { "name": "Bano's Stitching Boutique", "address": "Tariq Road, PECHS Block 2", "city": "Karachi", "lat": 24.8722, "lng": 67.0641, "specialities": ["women_eastern", "bridal"], "quality": 4.6, "reviews": 19, "homeVisits": true },
+  { "name": "Karachi Cut Masters", "address": "Boat Basin, Clifton Block 5", "city": "Karachi", "lat": 24.8152, "lng": 67.0302, "specialities": ["western", "men_eastern"], "quality": 4.2, "reviews": 21, "homeVisits": false },
+  { "name": "Gulshan Silai Centre", "address": "Block 13-D, Gulshan-e-Iqbal", "city": "Karachi", "lat": 24.9181, "lng": 67.0969, "specialities": ["women_eastern", "kids", "alterations"], "quality": 3.8, "reviews": 13, "homeVisits": false }
+]
