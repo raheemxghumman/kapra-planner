@@ -1,7 +1,10 @@
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
-import { ShopifyFeedClient, type FeedProduct } from '../../../integrations/brand-feeds/shopify-feed.client.js';
+import {
+  ShopifyFeedClient,
+  type FeedProduct,
+} from '../../../integrations/brand-feeds/shopify-feed.client.js';
 import { Brand, type SyncReport } from '../../brands/entities/brand.entity.js';
 import { ProductCategory } from '../catalogue.enums.js';
 import { ProductVariant } from '../entities/product-variant.entity.js';
@@ -29,7 +32,12 @@ const stripHtml = (html: string | null) =>
 
 const sizeOf = (feed: FeedProduct, variant: FeedProduct['variants'][number]): string => {
   const sizeIndex = feed.options.findIndex((option) => /size/i.test(option.name));
-  const value = sizeIndex >= 0 ? [variant.option1, variant.option2, variant.option3][sizeIndex] : variant.title;
+  // Variants that differ only by colour or design are not sizes: the piece is one size.
+  const onlyColours =
+    sizeIndex < 0 && feed.options.some((option) => /colou?r|shade|design|print/i.test(option.name));
+  if (onlyColours) return 'Free size';
+  const value =
+    sizeIndex >= 0 ? [variant.option1, variant.option2, variant.option3][sizeIndex] : variant.title;
   return !value || value === 'Default Title' ? 'Free size' : value.slice(0, 40);
 };
 
@@ -93,7 +101,9 @@ export class CatalogueSyncService {
       const existing = await this.products.find({
         where: { brandId: brand.id, externalId: Not(IsNull()) },
       });
-      const existingByExternalId = new Map(existing.map((product) => [product.externalId!, product]));
+      const existingByExternalId = new Map(
+        existing.map((product) => [product.externalId!, product]),
+      );
 
       // A Map de-duplicates products that appear on two feed pages; a bulk upsert cannot
       // touch the same row twice.
@@ -108,13 +118,19 @@ export class CatalogueSyncService {
       for (let i = 0; i < rows.length; i += CHUNK) {
         await this.saveChunk(rows.slice(i, i + CHUNK));
       }
-      report.created = rows.filter((row) => !existingByExternalId.has(row.product.externalId!)).length;
+      report.created = rows.filter(
+        (row) => !existingByExternalId.has(row.product.externalId!),
+      ).length;
       report.updated = rows.length - report.created;
 
       // Products no longer in the feed are hidden, not deleted (saved outfits may use them).
       const seen = rows.map((row) => row.product.externalId!);
       const hidden = await this.products.update(
-        { brandId: brand.id, isActive: true, externalId: seen.length ? Not(In(seen)) : Not(IsNull()) },
+        {
+          brandId: brand.id,
+          isActive: true,
+          externalId: seen.length ? Not(In(seen)) : Not(IsNull()),
+        },
         { isActive: false },
       );
       report.hidden = hidden.affected ?? 0;
@@ -130,7 +146,11 @@ export class CatalogueSyncService {
   }
 
   /** Builds the product row, or returns null if the item should not be imported. */
-  private toProductRow(brand: Brand, item: FeedProduct, existing?: Product): Partial<Product> | null {
+  private toProductRow(
+    brand: Brand,
+    item: FeedProduct,
+    existing?: Product,
+  ): Partial<Product> | null {
     if (!shouldImport(item)) return null;
 
     const rules = tagByRules(item, { gender: brand.defaultGender, style: brand.defaultStyle });
@@ -163,7 +183,9 @@ export class CatalogueSyncService {
       price,
       compareAtPrice: compareAt > price ? Math.round(compareAt) : null,
       images: item.images.slice(0, 6).map((image) => image.src.split('?')[0]),
-      productUrl: brand.website ? `${brand.website.replace(/\/$/, '')}/products/${item.handle}` : null,
+      productUrl: brand.website
+        ? `${brand.website.replace(/\/$/, '')}/products/${item.handle}`
+        : null,
       isActive: true,
       aiTagged: existing?.aiTagged ?? false,
     };

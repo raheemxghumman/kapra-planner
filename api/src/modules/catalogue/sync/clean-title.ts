@@ -1,4 +1,17 @@
-const SMALL_WORDS = new Set(['and', 'or', 'of', 'with', 'in', 'on', 'the', 'a', 'an', 'for', 'to', 'by']);
+const SMALL_WORDS = new Set([
+  'and',
+  'or',
+  'of',
+  'with',
+  'in',
+  'on',
+  'the',
+  'a',
+  'an',
+  'for',
+  'to',
+  'by',
+]);
 const KEEP_UPPER = new Set(['rtw', 'rts', 'pc', 'pcs', 'ii', 'iii']);
 
 /**
@@ -9,6 +22,7 @@ export function cleanTitle(raw: string): string {
   let title = raw
     .replace(/\((?=[^)]*\d)[A-Z0-9\- ]{5,}\)/g, '') // "(W25DE2038)" style article codes
     .replace(/^\s*(rtw|rts|new|sale)\s*[|:-]\s*/i, '') // "RTW | ", "NEW - "
+    .replace(/\b(\w+)\s+\1\b/gi, '$1') // "Pink Heels Heels" -> "Pink Heels"
     .replace(/\s{2,}/g, ' ')
     .trim();
 

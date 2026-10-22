@@ -16,4 +16,7 @@ describe('cleanTitle', () => {
   it('keeps short codes such as PC in capitals', () => {
     expect(cleanTitle('VELOUR NOIR 2 PC')).toBe('Velour Noir 2 PC');
   });
+  it('collapses a word repeated by the shop', () => {
+    expect(cleanTitle('Pink Heels Heels')).toBe('Pink Heels');
+  });
 });

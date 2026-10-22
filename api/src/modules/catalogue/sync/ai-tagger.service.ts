@@ -40,7 +40,9 @@ const oneOf = <T extends string>(allowed: readonly T[], value: unknown): T | und
   typeof value === 'string' && allowed.includes(value as T) ? (value as T) : undefined;
 
 const someOf = <T extends string>(allowed: readonly T[], value: unknown, max: number): T[] =>
-  Array.isArray(value) ? [...new Set(value.filter((v): v is T => oneOf(allowed, v) !== undefined))].slice(0, max) : [];
+  Array.isArray(value)
+    ? [...new Set(value.filter((v): v is T => oneOf(allowed, v) !== undefined))].slice(0, max)
+    : [];
 
 /**
  * Refines the rule-based tags with the LLM. Runs after each sync on a limited number of
@@ -90,10 +92,21 @@ export class AiTaggerService {
     ];
     let content: string | null;
     try {
-      ({ content } = await this.llm.chat({ tier: 'fast', json: true, temperature: 0, maxTokens: 3_000, messages }));
+      ({ content } = await this.llm.chat({
+        tier: 'fast',
+        json: true,
+        temperature: 0,
+        maxTokens: 3_000,
+        messages,
+      }));
     } catch (error) {
       if (!(error instanceof Error) || !error.message.includes('400')) throw error;
-      ({ content } = await this.llm.chat({ tier: 'fast', temperature: 0, maxTokens: 3_000, messages }));
+      ({ content } = await this.llm.chat({
+        tier: 'fast',
+        temperature: 0,
+        maxTokens: 3_000,
+        messages,
+      }));
     }
     const text = content ?? '';
     const json = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
@@ -127,7 +140,9 @@ export class AiTaggerService {
         colours: colours.length > 0 ? colours : product.colours,
         occasions: occasions.length > 0 ? occasions : product.occasions,
         fabric:
-          typeof tags.fabric === 'string' && /^[a-z ]{3,30}$/.test(tags.fabric) ? tags.fabric : product.fabric,
+          typeof tags.fabric === 'string' && /^[a-z ]{3,30}$/.test(tags.fabric)
+            ? tags.fabric
+            : product.fabric,
         aiTagged: true,
       });
       updated++;
