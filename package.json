@@ -1,0 +1,27 @@
+{
+  "name": "kapra-planner",
+  "private": true,
+  "description": "Kapra Planner: AI stylist, virtual try-on and tailor booking for Pakistani fashion",
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev -w api",
+    "dev:web": "npm run dev -w web",
+    "build": "npm run build -w api && npm run build -w web",
+    "lint": "npm run lint -w api && npm run lint -w web",
+    "typecheck": "npm run typecheck -w api && npm run typecheck -w web",
+    "test": "npm test -w api && npm test -w web",
+    "format": "prettier --write \"{api,web}/src/**/*.{ts,tsx,css}\""
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  },
+  "allowScripts": {
+    "@scarf/scarf": false
+  }
+}
