@@ -5,6 +5,7 @@ import { HeroSection } from './HeroSection';
 import { LookbookRail } from './LookbookRail';
 import { NumbersBand } from './NumbersBand';
 import { PartnersSection } from './PartnersSection';
+import { ShowcaseSection } from './ShowcaseSection';
 import { StorySection } from './StorySection';
 
 /**
@@ -22,6 +23,7 @@ export function LandingPage() {
       <HeroSection products={featured.data} />
       <NumbersBand brands={brands.data ?? []} facets={facets.data} />
       {products.length > 0 && <StorySection products={products} />}
+      <ShowcaseSection />
       <LookbookRail products={products.slice(9, 21)} />
       <PartnersSection products={products} />
       <FaqSection />
