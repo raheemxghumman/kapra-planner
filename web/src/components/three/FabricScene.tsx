@@ -81,9 +81,10 @@ function Cloth() {
   );
 }
 
-export default function FabricScene() {
+/** `distance` moves the camera back; larger values show the whole cloth in tall panels. */
+export default function FabricScene({ distance = 5 }: { distance?: number }) {
   return (
-    <Canvas camera={{ position: [0, 0, 5], fov: 40 }} dpr={[1, 2]} aria-hidden>
+    <Canvas camera={{ position: [0, 0, distance], fov: 40 }} dpr={[1, 2]} aria-hidden>
       <hemisphereLight args={['#fff8ef', '#4f5a3a', 0.9]} />
       {/* Warm key light from the front right. */}
       <directionalLight position={[3, 4, 5]} intensity={2.4} color="#fff1df" />

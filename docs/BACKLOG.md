@@ -26,9 +26,9 @@ Lead: **A** = Abdulraheem, **W** = Wania (the other member reviews).
 - [x] T1.4 A: `JwtAuthGuard` (global, with `@Public()` opt-out), `RolesGuard` + `@Roles()`, `@CurrentUser()` decorator
 - [x] T1.5 A: Global exception filter, `LoggingInterceptor`, `RequestIdMiddleware`, helmet, throttler
 - [ ] T1.6 A: Unit tests for auth service; e2e test register → login → refresh → logout
-- [ ] T1.7 W: `AuthContext` + `useAuth`; axios interceptors (attach token, refresh on 401 once)
-- [ ] T1.8 W: Login and register pages (role choice), `useForm` hook with validation, error display
-- [ ] T1.9 W: `ProtectedRoute` by role; four layouts with navigation; logout
+- [x] T1.7 W: `AuthContext` + `useAuth`; axios interceptors (attach token, refresh on 401 once)
+- [x] T1.8 W: Login and register pages (role choice), `useForm` hook with validation, error display
+- [x] T1.9 W: `ProtectedRoute` by role; four layouts with navigation; logout
 - [ ] T1.10 W: Postman collection started (auth folder, environments)
 
 ## Week 2 — Profiles and onboarding (6 – 12 Nov) · FR-03, FR-04, FR-32, FR-33, UC-02, UC-15, UC-25, UC-26

@@ -1,5 +1,14 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsIn, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import {
+  IsEmail,
+  IsIn,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 import { SELF_REGISTER_ROLES, UserRole } from '../../../common/enums/user-role.enum.js';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -30,8 +39,11 @@ export class RegisterDto {
   @IsIn(SELF_REGISTER_ROLES)
   role: UserRole;
 
-  /** Pakistani mobile number, e.g. 03001234567 or +923001234567. */
-  @IsOptional()
+  /**
+   * Pakistani mobile number, e.g. 03001234567 or +923001234567.
+   * Required for brands and tailors (customers contact them); optional for customers.
+   */
+  @ValidateIf((dto: RegisterDto) => dto.role !== UserRole.Customer || dto.phone !== undefined)
   @Transform(trim)
   @Matches(/^(\+92|0)3\d{9}$/, { message: 'phone must be a Pakistani mobile number like 03001234567' })
   phone?: string;
