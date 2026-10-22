@@ -11,7 +11,10 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware.js';
 import { EnvironmentVariables, validateEnv } from './config/env.validation.js';
 import { buildTypeOrmOptions } from './database/typeorm.options.js';
+import { LlmModule } from './integrations/llm/llm.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { BrandsModule } from './modules/brands/brands.module.js';
+import { CatalogueModule } from './modules/catalogue/catalogue.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
@@ -36,8 +39,11 @@ import { UsersModule } from './modules/users/users.module.js';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
 
     HealthModule,
+    LlmModule,
     UsersModule,
     AuthModule,
+    BrandsModule,
+    CatalogueModule,
   ],
   providers: [
     // Guards run in this order: rate limit -> valid JWT (unless @Public) -> role check.

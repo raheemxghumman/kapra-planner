@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Limelight",
+    "website": "https://limelight.pk",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Everyday pret, unstitched lawn and accessories with bright, wearable prints."
+  },
+  {
+    "name": "Gul Ahmed",
+    "website": "https://www.gulahmedshop.com",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "One of Pakistan's oldest textile houses, known for lawn and seasonal collections."
+  },
+  {
+    "name": "Bonanza Satrangi",
+    "website": "https://bonanzasatrangi.com",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Colourful ready-to-wear and unstitched collections for every season."
+  },
+  {
+    "name": "Alkaram Studio",
+    "website": "https://www.alkaramstudio.com",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Printed and embroidered pret, two-piece sets and unstitched fabric."
+  },
+  {
+    "name": "Sana Safinaz",
+    "website": "https://www.sanasafinaz.com",
+    "tier": "designer",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Designer luxury pret and formal wear with refined embroidery."
+  },
+  {
+    "name": "Maria B",
+    "website": "https://www.mariab.pk",
+    "tier": "designer",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Designer formals, luxury lawn and occasion wear."
+  },
+  {
+    "name": "Cross Stitch",
+    "website": "https://www.crossstitch.pk",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Contemporary eastern wear with clean cuts and modern colours."
+  },
+  {
+    "name": "Zara Shahjahan",
+    "website": "https://zarashahjahan.com",
+    "tier": "designer",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Designer luxury lawn and festive wear rooted in heritage craft."
+  },
+  {
+    "name": "Generation",
+    "website": "https://generation.com.pk",
+    "tier": "high_street",
+    "defaultGender": "women",
+    "defaultStyle": "eastern",
+    "description": "Playful, culturally rooted prints and silhouettes since 1983."
+  },
+  {
+    "name": "Outfitters",
+    "website": "https://outfitters.com.pk",
+    "tier": "high_street",
+    "defaultGender": "unisex",
+    "defaultStyle": "western",
+    "description": "Western streetwear and basics for men and women."
+  },
+  {
+    "name": "Breakout",
+    "website": "https://breakout.com.pk",
+    "tier": "high_street",
+    "defaultGender": "unisex",
+    "defaultStyle": "western",
+    "description": "Western fashion, denim and casual wear."
+  },
+  {
+    "name": "Junaid Jamshed",
+    "website": "https://www.junaidjamshed.com",
+    "tier": "high_street",
+    "defaultGender": "men",
+    "defaultStyle": "eastern",
+    "description": "Kurtas, shalwar kameez and waistcoats for men, plus women's eastern wear."
+  }
+]

@@ -17,6 +17,7 @@ Short rules so the codebase reads as if one person wrote it, and so every line c
 - One module per feature; files named `<feature>.<type>.ts` (`bookings.service.ts`, `create-booking.dto.ts`).
 - **Controller:** routing, guards, DTOs, status codes, Swagger decorators. No business logic, no repository access.
 - **Service:** all business rules and data changes. Throws Nest HTTP exceptions (`NotFoundException`, `ForbiddenException`, `ConflictException`).
+- **Relations:** type every relation property as `Relation<Other>` (TypeORM's ES-module fix; without it, two entities that import each other crash at startup with "Cannot access before initialization").
 - **Entities:** TypeORM classes, `snake_case` column names, `camelCase` properties, explicit relations, `createdAt`/`updatedAt` on every table.
 - **DTOs:** every body and query param has a DTO with class-validator decorators. Response shapes never expose `passwordHash` (use `@Exclude()` + `ClassSerializerInterceptor`).
 - **External services:** interface + injection token in `integrations/<service>/`; feature modules depend on the interface, never on the SDK.
