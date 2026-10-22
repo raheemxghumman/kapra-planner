@@ -135,8 +135,9 @@ export class CreateTailorServiceDto {
   @MaxLength(300)
   description?: string;
 
+  /** Rs 200 minimum: Stripe cannot charge less than about USD 0.50. */
   @IsInt()
-  @Min(100)
+  @Min(200)
   @Max(500_000)
   price: number;
 

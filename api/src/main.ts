@@ -4,6 +4,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
+import { SocketIoAdapter } from './modules/realtime/socket-io.adapter.js';
 import type { EnvironmentVariables } from './config/env.validation.js';
 
 async function bootstrap(): Promise<void> {
@@ -20,6 +21,7 @@ async function bootstrap(): Promise<void> {
 
   // Only our frontend may call the API from a browser.
   app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
+  app.useWebSocketAdapter(new SocketIoAdapter(app, config.get('WEB_ORIGIN', { infer: true })));
 
   // Validate every request body/query against its DTO:
   // whitelist removes unknown fields, forbidNonWhitelisted rejects them, transform builds DTO instances.

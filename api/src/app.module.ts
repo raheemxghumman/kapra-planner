@@ -20,6 +20,11 @@ import { StylistModule } from './modules/stylist/stylist.module.js';
 import { TryOnModule } from './modules/tryon/try-on.module.js';
 import { TailorsModule } from './modules/tailors/tailors.module.js';
 import { GeocodingModule } from './integrations/geocoding/geocoding.module.js';
+import { EmailModule } from './integrations/email/email.module.js';
+import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
+import { BookingsModule } from './modules/bookings/bookings.module.js';
 import { StorageModule } from './integrations/storage/storage.module.js';
 import { WishlistModule } from './modules/wishlist/wishlist.module.js';
 import { HealthModule } from './modules/health/health.module.js';
@@ -58,6 +63,11 @@ import { UsersModule } from './modules/users/users.module.js';
     TryOnModule,
     GeocodingModule,
     TailorsModule,
+    EmailModule,
+    RealtimeModule,
+    NotificationsModule,
+    PaymentsModule,
+    BookingsModule,
   ],
   providers: [
     // Guards run in this order: rate limit -> valid JWT (unless @Public) -> role check.
