@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { getProduct, getSimilarProducts } from '../../api/catalogue.api';
 import { ProductCard } from '../../components/catalogue/ProductCard';
+import { WishlistHeart } from '../../components/catalogue/WishlistHeart';
 import { useApi } from '../../hooks/useApi';
 import { COLOUR_HEX } from '../../utils/colours';
 import { cn, formatPrice, imageUrl, labelOf } from '../../utils/format';
@@ -162,7 +163,7 @@ export function ProductPage() {
           </h2>
           <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
             {similar.data.slice(0, 8).map((other, index) => (
-              <ProductCard key={other.id} product={other} index={index} />
+              <ProductCard key={other.id} product={other} index={index} action={<WishlistHeart productId={other.id} />} />
             ))}
           </div>
         </section>

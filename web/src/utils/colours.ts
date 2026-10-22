@@ -26,3 +26,5 @@ export const COLOUR_HEX: Record<string, string> = {
   silver: '#c0c0c0',
   multi: 'conic-gradient(#b3261e, #e8c547, #3f7d4e, #3460a8, #6a3d8f, #b3261e)',
 };
+
+export const COLOUR_NAMES = Object.keys(COLOUR_HEX);

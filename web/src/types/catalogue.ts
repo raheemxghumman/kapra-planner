@@ -23,6 +23,9 @@ export interface BrandRef {
   name: string;
   slug: string;
   tier: 'high_street' | 'designer';
+  /** Set when an approved brand account manages it: the brand sells on Kapra. */
+  ownerId?: string | null;
+  logoUrl?: string | null;
 }
 
 export interface ProductVariant {
@@ -69,6 +72,7 @@ export interface BrandSummary extends BrandRef {
   website: string | null;
   logoUrl: string | null;
   productCount: number;
+  partner: boolean;
 }
 
 export interface ProductFilters {

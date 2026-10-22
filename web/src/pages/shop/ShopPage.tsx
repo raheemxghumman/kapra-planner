@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { getFacets } from '../../api/catalogue.api';
 import { ProductCard } from '../../components/catalogue/ProductCard';
+import { WishlistHeart } from '../../components/catalogue/WishlistHeart';
 import { RevealText } from '../../components/motion/RevealText';
 import { useApi } from '../../hooks/useApi';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -124,7 +125,7 @@ export function ShopPage() {
           )}
           <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
             {items.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <ProductCard key={product.id} product={product} index={index} action={<WishlistHeart productId={product.id} />} />
             ))}
             {loading && Array.from({ length: items.length === 0 ? 8 : 4 }, (_, i) => <SkeletonCard key={`s${i}`} />)}
           </div>
