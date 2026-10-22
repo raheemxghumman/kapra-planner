@@ -31,7 +31,8 @@ Short rules so the codebase reads as if one person wrote it, and so every line c
 - Pages in `pages/<role>/`, reusable pieces in `components/`, API calls only in `api/` (components never call axios directly).
 - Data loading through `useApi`; forms through `useForm`; global state only in Context (auth, cart, notifications). Everything else is local state.
 - Every request shows loading, error and empty states.
-- Bootstrap classes for layout and spacing; colours and fonts only from `theme.css` variables.
+- Tailwind utility classes for layout and spacing; colours and fonts only from the `@theme` tokens in `index.css` (`bg-paper`, `text-ink`, `font-logo`).
+- Animations with Motion; every animation respects `prefers-reduced-motion`. 3D scenes live in `components/three/` and are lazy-loaded.
 - Accessible by default: labels on inputs, `alt` on images, buttons are `<button>`.
 
 ## Git

@@ -33,7 +33,9 @@
 | Routing | **React Router** | Separate customer, brand, tailor and admin areas | 14 |
 | State | **Context API** (auth, cart, notifications) + **custom hooks** | Taught in the course; no Redux needed at this size | 13 |
 | HTTP client | **axios** instance with interceptors (adds JWT, refreshes token) | Clear, easy to explain | 14 |
-| Styling | **Bootstrap 5** + our own theme (CSS variables with the Kapra colours and fonts) | Course teaches Bootstrap; grid makes every page responsive | 2 |
+| Styling | **Tailwind CSS v4** with the Kapra theme (`@theme` tokens) | Utility classes keep styles next to the markup; responsive prefixes (`md:`) and CSS grid make every page responsive | 2 |
+| Animation | **Motion** (formerly Framer Motion): page transitions, scroll reveals, hover and tap feedback | Smooth, declarative animations; respects reduced-motion settings | — |
+| 3D | **React Three Fiber** + drei (three.js), loaded lazily | 3D scenes (fabric hero, outfit viewer) written as React components | — |
 | Forms | Controlled components + a small `useForm` hook of our own | Course teaches controlled components; we can explain every line | 14 |
 | Maps | **react-leaflet** + OpenStreetMap tiles; Nominatim through our API | Free, no key | — |
 | Real-time | **socket.io-client** | Chat and live notifications | — |
@@ -44,13 +46,14 @@
 | Auth | **JWT** (passport-jwt), bcrypt password hashing, role guard | Course week 9 security topics | 9 |
 | Events | **@nestjs/event-emitter** (built on Node's EventEmitter) | Course week 7 events module; decouples bookings from emails and notifications | 7 |
 | API docs | **Swagger (OpenAPI)** at `/api/docs` | Live, clickable API documentation; export to Postman | 7 |
-| AI stylist | **Groq** (Llama 3.3 70B, tool calling) | Free, fast | — |
-| Try-on | **Gemini** image model, fallback **Hugging Face IDM-VTON Space** (`@gradio/client`) | Free; fallback when one fails | — |
+| AI stylist | **Groq** `openai/gpt-oss-120b` (tool calling); `gpt-oss-20b` for tagging; several keys rotated by `KeyPool` | Free, fast (spike: 3.8 s for a full outfit) | — |
+| Try-on | **Hugging Face IDM-VTON Space** (`@gradio/client`), Gemini kept as an optional provider | Free (spike: 25 s, good quality); Gemini image models need billing | — |
 | Sentiment | **cardiffnlp/twitter-xlm-roberta-base-sentiment** in a Python GitHub Actions job | Pre-trained model the instructor asked for; free; too big for Render | — |
 | Payments | **Stripe** test mode, hosted Checkout + webhooks | Instructor asked for Stripe; test mode is free | — |
 | Email | **Resend** | Free 3,000/month | — |
 | Images | **Cloudinary** | Free storage and resizing | — |
-| Testing | **Jest** (unit), **Supertest** (API e2e), **Postman** collection, **Vitest + React Testing Library** (a few components) | Course week 7 Postman; week 15 CI | 7, 15 |
+| Testing | **Vitest** (unit, both apps; NestJS 12's default), **Supertest** (API e2e), **Postman** collection, **React Testing Library** | Course week 7 Postman; week 15 CI | 7, 15 |
+| Linting | **oxlint** (NestJS 12 and Vite default) + Prettier | Fast, type-aware linting | — |
 | DevOps | **GitHub Actions** (CI, sync job, sentiment job), **Docker** (API image + local Postgres), Render, Vercel | Course week 15 | 15 |
 | Runtime | Node.js **24 LTS** on Render, CI and Docker (local Node 26 also works) | Long-term support version in production | 7 |
 
@@ -59,7 +62,7 @@
 | Course topic | Where in our code |
 |---|---|
 | Agile, Scrum, sprint planning (wk 1) | Weekly sprints in `BACKLOG.md`, GitHub Projects board, stand-up notes |
-| Responsive design, grid, Bootstrap (wk 2) | Bootstrap grid on every page; mobile-first layouts |
+| Responsive design, grid (wk 2) | Tailwind responsive prefixes and CSS grid on every page; mobile-first layouts |
 | ES6: classes, arrow functions, destructuring, spread/rest, modules, promises, async/await (wk 3–5) | Everywhere; services are classes, all I/O is async/await |
 | DOM events, JSON, forms (wk 6) | React forms, JSON APIs |
 | Node modules, EventEmitter, files (wk 7) | Domain events (`booking.confirmed` → email + notification); seed data read from JSON files |
@@ -109,7 +112,7 @@ kapra-planner/
 │       ├── components/       shared UI (buttons, cards, map, timeline, chat box)
 │       ├── layouts/          PublicLayout, CustomerLayout, BrandLayout, TailorLayout, AdminLayout
 │       ├── pages/            customer/  brand/  tailor/  admin/  auth/
-│       ├── styles/           theme.css (Kapra tokens over Bootstrap)
+│       ├── components/three/ React Three Fiber scenes (lazy-loaded)
 │       └── utils/            formatters, validators
 ├── jobs/sentiment/           Python job: score new reviews (requirements.txt, score.py)
 ├── docs/                     this plan, Postman collection, viva notes, screenshots
@@ -165,9 +168,9 @@ This order means every feature builds on finished ones (outfits need products, b
 
 **Product sync and tagging.** For each verified brand with a feed URL, fetch the public product feed page by page, upsert products and size variants, hide products that disappeared, then send only *new* products to Groq in batches of 20 with a strict JSON prompt that returns `{colour, occasion, gender, style}` per ID. Tags are stored, so each product is tagged once.
 
-**AI stylist agent.** `StylistService.plan()` starts a Groq chat with three tools: `searchProducts(filters)`, `buildOutfit(productIds)`, `checkBudget(outfit)`. Loop: send messages → if the model asks for a tool, our code runs it against PostgreSQL and returns the result → repeat (max 6 tool calls, 30 s timeout) → final answer is JSON with product IDs and reasons → we validate every ID, price, size and stock and the budget → if anything fails, one corrective retry with the error message → save suggestions. The model never sees anything except what our tools return.
+**AI stylist agent.** `StylistService.plan()` starts a Groq chat with tools `searchProducts(filters)`, `checkBudget(productIds)` and `submitOutfit(items)`; the final answer must come through `submitOutfit` (spike finding). Loop: send messages → if the model asks for a tool, our code runs it against PostgreSQL and returns the result → repeat (max 6 tool calls, 30 s timeout) → final answer is JSON with product IDs and reasons → we validate every ID, price, size and stock and the budget → if anything fails, one corrective retry with the error message → save suggestions. The model never sees anything except what our tools return.
 
-**Try-on.** `TryOnService` receives a list of providers through the `TRY_ON_PROVIDERS` token: `[GeminiTryOnProvider, HfTryOnProvider]`. It tries them in order (strategy and chain-of-responsibility patterns). The request returns `202 Accepted` immediately; the work runs in the background and the frontend polls `GET /tryons/:id` every 3 s.
+**Try-on.** `TryOnService` receives a list of providers through the `TRY_ON_PROVIDERS` token: `[IdmVtonProvider, LeffaProvider]` (Gemini can be added if billing is ever enabled). It tries them in order (strategy and chain-of-responsibility patterns). The request returns `202 Accepted` immediately; the work runs in the background and the frontend polls `GET /tryons/:id` every 3 s.
 
 **Ranking.** `bestScore = 0.5 × Bayesian rating + 0.3 × mean sentiment + 0.2 × completion rate`, each scaled to 0–1. Bayesian rating = `(C × m + Σ ratings) / (C + n)` with `m` = platform average, `C` = 5. Recomputed when a review is added (rating part) and after the hourly sentiment job (sentiment part).
 
@@ -183,10 +186,10 @@ This order means every feature builds on finished ones (outfits need products, b
 
 | Level | Tool | What | Target |
 |---|---|---|---|
-| Unit | Jest | Services: stylist validation, status machines, ranking formula, budget checks, auth | 70% line coverage on services |
-| API e2e | Jest + Supertest against Docker Postgres | Auth flow, booking + webhook flow, role and ownership denial (403/404) | Main use cases UC-01, 04, 08, 09, 10, 12 |
+| Unit | Vitest | Services: stylist validation, status machines, ranking formula, budget checks, auth | 70% line coverage on services |
+| API e2e | Vitest + Supertest against Docker Postgres | Auth flow, booking + webhook flow, role and ownership denial (403/404) | Main use cases UC-01, 04, 08, 09, 10, 12 |
 | Manual API | Postman collection with environments (local, production) | Every endpoint, with example bodies | Exported to `docs/postman/` |
-| Frontend | Vitest + React Testing Library | `useForm`, protected routes, `StatusTimeline`, cart totals | Key components only |
+| Frontend | Vitest + React Testing Library | `useApi`, `useForm`, protected routes, `StatusTimeline`, cart totals | Key components only |
 | AI quality | Fixed set of 10 stylist requests in `docs/stylist-eval.md` | Real products, within budget, under 30 s | Re-run after prompt changes |
 | Before each release | Checklist in `BACKLOG.md` | Login per role, one full booking with test card, chat, review | Every demo |
 
@@ -248,7 +251,7 @@ Buffer: if a week slips, cut in this order: brand analytics (FR-27), product ord
 
 | Risk | Plan |
 |---|---|
-| Gemini image generation unavailable on the free key | Week 0 spike; Hugging Face Space fallback is already in the design |
+| Free try-on Space busy or out of GPU time | Two HF Spaces behind the same interface; result cached per outfit and photo |
 | Groq rate limits during the demo | Tag products once; cache stylist results for identical requests for 10 minutes |
 | Render free server sleeps or restarts | cron-job.org ping; Socket.IO client reconnects automatically |
 | Supabase pauses after 7 idle days | Hourly job touches the database |

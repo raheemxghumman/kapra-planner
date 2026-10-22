@@ -5,17 +5,17 @@ Lead: **A** = Abdulraheem, **W** = Wania (the other member reviews).
 
 ## Week 0 — Setup and spikes (23 – 29 Oct)
 
-- [ ] T0.1 A: Create GitHub repo `kapra-planner`, npm workspaces, `.gitignore`, `.editorconfig`, Prettier, ESLint, branch protection on `main`
-- [ ] T0.2 A: Scaffold `api` with Nest CLI; config module with env validation; `/api/v1/health` endpoint; Swagger at `/api/docs`
-- [ ] T0.3 A: TypeORM data source for Supabase + `docker-compose.yml` local Postgres; first empty migration runs
-- [ ] T0.4 W: Scaffold `web` with Vite (React + TypeScript); Bootstrap 5; `theme.css` with Kapra colours and fonts; React Router with placeholder pages per layout
-- [ ] T0.5 W: axios instance with base URL from env; health check shown on home page
+- [x] T0.1 A: Create GitHub repo `kapra-planner`, npm workspaces, `.gitignore`, `.editorconfig`, Prettier, ESLint, branch protection on `main`
+- [x] T0.2 A: Scaffold `api` with Nest CLI; config module with env validation; `/api/v1/health` endpoint; Swagger at `/api/docs`
+- [x] T0.3 A: TypeORM data source for Supabase + `docker-compose.yml` local Postgres; first empty migration runs
+- [x] T0.4 W: Scaffold `web` with Vite (React + TypeScript); Tailwind theme with Kapra colours and fonts; Motion page transitions; 3D fabric hero; React Router
+- [x] T0.5 W: axios instance with base URL from env; health check shown on home page
 - [ ] T0.6 A: Deploy API to Render (Docker or Node 24), web to Vercel, set env vars, CORS between them
-- [ ] T0.7 A: GitHub Actions `ci.yml` (lint, type-check, test, build for both apps)
-- [ ] T0.8 A: **Spike** Gemini try-on with one photo and two garments; **spike** HF IDM-VTON Space via `@gradio/client`; record quality, time and limits in `docs/spikes.md`
-- [ ] T0.9 A: **Spike** Groq tool calling with a fake `searchProducts` tool
-- [ ] T0.10 A: **Spike** Stripe test Checkout + webhook with Stripe CLI locally
-- [ ] T0.11 W: **Spike** read one brand product feed; list 6 brands whose feeds work
+- [x] T0.7 A: GitHub Actions `ci.yml` (lint, type-check, test, build for both apps)
+- [x] T0.8 A: **Spike** Gemini try-on with one photo and two garments; **spike** HF IDM-VTON Space via `@gradio/client`; record quality, time and limits in `docs/spikes.md`
+- [x] T0.9 A: **Spike** Groq tool calling with a fake `searchProducts` tool
+- [x] T0.10 A: **Spike** Stripe test Checkout (webhook delivery tested in week 7 with the Stripe CLI)
+- [x] T0.11 W: **Spike** read one brand product feed; list 6 brands whose feeds work
 - [ ] T0.12 W: GitHub Projects board with all issues from this file
 
 ## Week 1 — Auth and roles (30 Oct – 5 Nov) · FR-01, FR-02, NFR-03, UC-01

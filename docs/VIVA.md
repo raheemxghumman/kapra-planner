@@ -106,12 +106,15 @@ We describe functions (name, JSON parameters) to the LLM. Instead of answering, 
 **Q: How is the best tailor chosen? Where is the pre-trained model?**
 `0.5 × Bayesian rating + 0.3 × mean review sentiment + 0.2 × completion rate`. Sentiment comes from a pre-trained multilingual RoBERTa model (`cardiffnlp/twitter-xlm-roberta-base-sentiment`) run hourly in GitHub Actions. Bayesian rating stops one 5-star review putting a new tailor at the top.
 
-**Q: What happens if Gemini fails?**
-`TryOnService` tries providers in order through the `TRY_ON_PROVIDERS` token; the Hugging Face IDM-VTON Space is next. If both fail, the try-on is marked failed with a retry button.
+**Q: How does try-on work, and what happens if it fails?**
+The photo and garment image are sent to IDM-VTON, a pre-trained diffusion try-on model hosted free on a Hugging Face Space. `TryOnService` tries providers in order through the `TRY_ON_PROVIDERS` token (IDM-VTON, then Leffa). If all fail, the try-on is marked failed with a retry button. We tested Gemini too, but its image models have no free quota.
+
+**Q: How do you handle API rate limits with several keys?**
+`KeyPool` keeps using one key until the provider answers with a rate-limit error (429), rests that key for the time the provider asks (or 60 s) and retries the same request with the next free key. Other errors are thrown at once, because another key would not fix them. It has unit tests with a fake clock.
 
 ### DevOps
 **Q: What does your CI pipeline do?**
-On every pull request: install, lint, type-check, unit tests, e2e tests against a Postgres service container, build both apps. Merging is blocked if it fails. Render and Vercel deploy `main` automatically.
+On every push and pull request: install, lint (oxlint), type-check, unit tests (Vitest), build both apps, and build the API Docker image. e2e tests against a Postgres service container are added with the first database features. Merging is blocked if it fails. Render and Vercel deploy `main` automatically.
 
 **Q: What is Docker used for in your project?**
 A Dockerfile packages the API with Node 24 so it runs the same everywhere; docker-compose starts a local Postgres for development and e2e tests.
