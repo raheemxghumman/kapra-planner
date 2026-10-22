@@ -133,33 +133,61 @@ A Dockerfile packages the API with Node 24 so it runs the same everywhere; docke
 
 ---
 
-## Part 2 — Module notes (fill in when each module is done)
+## Part 2 — Module notes
 
-Template:
+Short notes per module: what it does, how a request flows, where the code is, and what we will be asked.
 
-```
-### <Module>
-- What it does (2 lines):
-- Endpoints / screens:
-- Request flow (step by step):
-- Key files:
-- Decisions and why:
-- Questions we might get + our answers:
-```
+### Auth and roles
+- **Does:** register, login, refresh, logout; four roles (customer, brand, tailor, admin); brand and tailor accounts start `pending`.
+- **Flow (login):** `AuthController.login` → `AuthService` loads the user with the password hash → `bcrypt.compare` (a dummy hash is compared when the email does not exist, so the response time does not reveal accounts) → 5 failures lock the account for 15 minutes → `TokensService.issue` returns a 15-minute JWT access token and a random refresh token (only its SHA-256 hash is stored).
+- **Refresh:** single use. `consume()` marks it used with a conditional update; using an old token again revokes every session of that user (theft detection). Refresh allows 40 calls a minute, login 10.
+- **Guards (global, in order):** Throttler → `JwtAuthGuard` (skip with `@Public()`) → `RolesGuard` (`@Roles()`).
+- **Files:** `api/src/modules/auth/*`, `api/src/common/guards/*`, `web/src/api/http.ts`, `web/src/api/session.ts`, `web/src/context/AuthContext.tsx`.
+- **Q: Why is the access token not in localStorage?** It lives only in memory, so a script cannot read it later. The refresh token is in localStorage because the API and website are on different domains (cookies would be third-party).
+- **Q: What happens when the access token expires mid-session?** The axios response interceptor sees 401, refreshes once (one shared request even if many calls fail together) and repeats the call.
 
-- [ ] Auth
-- [ ] Users, profiles, measurements
-- [ ] Admin verification
-- [ ] Catalogue and sync
-- [ ] AI stylist
-- [ ] Outfits and wishlist
-- [ ] Try-on
-- [ ] Tailors and ranking
-- [ ] Bookings and state machine
-- [ ] Payments and webhooks
-- [ ] Notifications and email
-- [ ] Chat
-- [ ] Reviews and sentiment job
-- [ ] Product orders
-- [ ] Frontend: routing, contexts, hooks
-- [ ] CI/CD and deployment
+### Catalogue and sync
+- **Does:** imports about 5,000 products from 12 brands' public Shopify feeds every night and tags category, colours, occasions and fabric.
+- **Flow:** `CatalogueSyncService.syncAll` → one brand at a time (`ShopifyFeedClient`, 250 per page, pauses and back-off) → `tagByRules` (keyword rules, unit tested) → upsert in chunks of 100 → products missing from the feed are hidden → Groq (`gpt-oss-20b`) refines up to 300 untagged products per run.
+- **Q: Why rules first and AI second?** Rules are free, instant and testable; the AI only fixes what rules cannot, which keeps us inside the free Groq limits.
+
+### AI stylist
+- **Does:** 2-3 complete outfits for an occasion and budget, from real in-stock pieces in the customer's size.
+- **Flow:** `StylistService.createRequest` builds the context (style profile, sizes, disliked products) → `StylistAgentService.run`: Groq `gpt-oss-120b` with two tools. `searchProducts` runs a real SQL query (gender, style, stock, price; ranked by occasion, colour and size match). `submitOutfits` is the only way to answer → every outfit is checked by `validateOutfit` (complete look, one piece per slot, within budget) and every id must have come from a search → problems go back to the model once → results saved in one transaction.
+- **Fallback:** if the AI fails or takes more than 50 s, `RuleStylistService` builds looks from the same queries and the same validation (the UI shows "Classic picks").
+- **Files:** `api/src/modules/stylist/agent/*` (the rules have their own tests), `web/src/pages/customer/stylist/*`.
+- **Q: How do you stop the AI inventing products?** It can only use ids our search returned; anything else is rejected and sent back as an error.
+- **Q: How does key rotation work?** `KeyPool` holds four Groq keys; on a 429 it rests that key (honouring `Retry-After`) and uses the next.
+
+### Virtual try-on
+- **Does:** dresses the customer's own photo in a chosen piece.
+- **Flow:** `POST /tryons` returns 202 at once → a background job downloads both images → `runProviderChain([IdmVton, Leffa])` (chain of responsibility, 3-minute timeout each) → result stored on Cloudinary → the page polls `GET /tryons/:id` every 3 s. The same photo + piece is cached; one running job per customer.
+- **Privacy:** photos are private, at most 3, and deleting a photo deletes its try-ons and files.
+- **Q: Why not Gemini?** Its image models have no free quota (see `spikes.md`); it can be added as another provider without changing the service.
+
+### Tailors, map and the "best tailor" ranking
+- **Search:** `GET /tailors?lat&lng&radiusKm&sort`: a bounding box first (uses the lat/lng index), then the exact Haversine distance in SQL; sorts best, nearest, rating, price.
+- **Score (pure functions, unit tested):** `0.55 × Bayesian rating + 0.30 × review sentiment + 0.15 × completion rate`. Bayesian rating = (5 × global mean + sum of ratings) / (5 + count), so one 5-star review does not beat fifty 4.8-star ones.
+- **Pre-trained model:** `nlptown/bert-base-multilingual-uncased-sentiment` reads each review (English, Urdu, Roman Urdu) and gives a probability for 1-5 stars; the expected stars scaled to 0-1 is the sentiment. It runs in a nightly job (`npm run job:reviews`, GitHub Actions), not in the web server, because the model is about 170 MB.
+- **Limitation we admit:** Roman Urdu is scored less reliably, which is why sentiment is only 30% of the score.
+- **Map:** OpenStreetMap tiles with Leaflet; address search by Nominatim (one request per second, answers cached in `geocode_cache`).
+
+### Bookings, payments, tracking and chat
+- **State machine (`booking-status.ts`, tested):** pending_payment → requested → accepted → in_progress → ready → completed; cancel (customer, before acceptance) and decline (tailor) refund the card. `nextStatus(current, action, actor)` rejects the wrong action and the wrong person.
+- **Race safety:** the status update has `WHERE status = <the one we read>`; if nothing changed, a second click gets 409.
+- **Payment flow:** create booking → `PaymentsService.start` → Stripe Checkout page (card details never touch our server) → the return page calls `POST /payments/confirm` and the server asks Stripe → `payment.paid` event → `BookingsService.onPaymentPaid` moves the booking to requested, notifies the tailor and emails a receipt. The signed webhook does the same once a webhook secret is set; whichever arrives first wins and the other does nothing.
+- **Refunds:** our restricted Stripe key needs dashboard approval for refunds, so they show as `refund_pending` until approved.
+- **Live updates:** the Socket.IO gateway checks the JWT on connect and puts the socket in a private `user:<id>` room; notifications, chat messages and status changes are pushed there. Clients never choose rooms.
+- **Q: Why an event between payments and bookings?** Payments do not need to know about bookings or orders (observer pattern), and orders reuse the same payment code.
+
+### Product orders, brand panel, admin
+- **Orders:** one order per partner brand (a brand an admin linked to an approved brand account). Only ids and quantities come from the browser; prices, stock and the delivery fee (Rs 250, free from Rs 5,000) are worked out on the server.
+- **Brand panel:** hide or show products (`hidden_by_brand` survives feed syncs), stock per size, hand-listed products (live after the first photo), stores on the map, 30-day analytics.
+- **Admin:** stats, approve or suspend users (suspension revokes refresh tokens), link brand accounts, hide reviews (the ranking recomputes), run the sync.
+
+### Frontend architecture
+- **Routing:** one `ProtectedRoute` per role area; each area uses `DashboardLayout` (the sidebar comes from `NAV_ITEMS[role]`).
+- **State:** Context API for app-wide data: `AuthContext`, `ToastProvider`, `RealtimeProvider` (one socket), `WishlistProvider` (optimistic hearts) and `CartProvider` (localStorage, grouped by brand). Page data uses the `useApi` hook (aborts stale requests); buttons use `useAction` (loading state + error toast).
+- **Animation:** Motion for page transitions, layout animations and springs; React Three Fiber for the fabric hero; CSS 3D (perspective + rotateX/Y) for tilt cards and the landing showcase. `prefers-reduced-motion` turns animations off.
+- **Q: Why Context and not Redux?** The shared state is small (who is logged in, the socket, cart, wishlist); Context plus hooks is enough and easier to explain.
+
