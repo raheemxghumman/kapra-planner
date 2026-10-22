@@ -12,6 +12,11 @@ import { RegisterDto } from './dto/register.dto.js';
 
 /** Stricter rate limit for routes attackers like to hammer. */
 const AUTH_RATE_LIMIT = { default: { limit: 10, ttl: 60_000 } };
+/**
+ * Refresh tokens are long random single-use secrets, so guessing is not a risk; every page load
+ * spends one, so this limit is higher than login's.
+ */
+const REFRESH_RATE_LIMIT = { default: { limit: 40, ttl: 60_000 } };
 
 @ApiTags('auth')
 @Controller('auth')
@@ -37,7 +42,7 @@ export class AuthController {
 
   /** Exchange a refresh token for a new access + refresh token pair (the old one stops working). */
   @Public()
-  @Throttle(AUTH_RATE_LIMIT)
+  @Throttle(REFRESH_RATE_LIMIT)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   refresh(@Body() dto: RefreshTokenDto): Promise<AuthResponseDto> {

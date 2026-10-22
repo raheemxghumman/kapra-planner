@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as authApi from '../api/auth.api';
 import { onSessionExpired, refreshSession } from '../api/session';
@@ -22,8 +23,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(restored);
         setStatus('authenticated');
       })
-      .catch(() => {
-        tokenStore.clear();
+      .catch((error: unknown) => {
+        // Only a 401 means the refresh token is no longer valid. After a rate limit or a
+        // network error the token is kept, so the next reload can restore the session.
+        if (isAxiosError(error) && error.response?.status === 401) tokenStore.clear();
         setStatus('anonymous');
       });
   }, []);
@@ -60,9 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous');
   }, []);
 
+  const updateUser = useCallback((next: User) => setUser(next), []);
+
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, register, logout, updateUser }),
+    [user, status, login, register, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
