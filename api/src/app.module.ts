@@ -5,11 +5,15 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import { RolesGuard } from './common/guards/roles.guard.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware.js';
 import { EnvironmentVariables, validateEnv } from './config/env.validation.js';
 import { buildTypeOrmOptions } from './database/typeorm.options.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [
@@ -32,9 +36,14 @@ import { HealthModule } from './modules/health/health.module.js';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
 
     HealthModule,
+    UsersModule,
+    AuthModule,
   ],
   providers: [
+    // Guards run in this order: rate limit -> valid JWT (unless @Public) -> role check.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],

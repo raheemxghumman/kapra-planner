@@ -55,6 +55,15 @@ The service loads the booking and checks `booking.customerId === currentUser.id`
 **Q: XSS, CSRF, SQL injection — how are you protected?**
 XSS: React escapes output; we never use `dangerouslySetInnerHTML`; helmet sets security headers. CSRF: we authenticate with a header token, not cookies, so a forged cross-site request has no token. SQL injection: TypeORM uses parameterised queries; we never build SQL from strings.
 
+**Q: Supabase has its own public REST API for every table. How did you secure it?**
+We never use it; all data goes through NestJS. Each migration enables row level security on its tables with no policies, so Supabase's `anon` and `authenticated` roles get zero rows (we verified the `users` table returns `[]`). Our backend connects as the table owner, which RLS does not restrict.
+
+**Q: Why is login slow on purpose, and why the same error for wrong email and wrong password?**
+bcrypt with cost 12 takes ~250 ms, which makes brute force expensive. For an unknown email we still compare against a dummy hash, so attackers cannot tell from the response time or the message whether an email is registered.
+
+**Q: What is refresh token reuse detection?**
+Every refresh token works once. If an already-used token comes back, either the user or a thief is replaying it, so we revoke all of that user's sessions. The update uses `WHERE revoked_at IS NULL`, so two simultaneous refreshes cannot both succeed.
+
 **Q: Why verify the Stripe webhook signature?**
 Anyone could POST "payment succeeded" to our URL. Stripe signs each event with our webhook secret; we verify the signature on the raw body before trusting it.
 

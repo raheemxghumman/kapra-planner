@@ -22,7 +22,8 @@ Short rules so the codebase reads as if one person wrote it, and so every line c
 - **External services:** interface + injection token in `integrations/<service>/`; feature modules depend on the interface, never on the SDK.
 - Ownership: any route with `:id` checks that the resource belongs to the current user (or the user is admin) in the service.
 - Use transactions whenever two or more tables must change together.
-- Schema changes only through migrations (`npm run migration:generate -- src/database/migrations/<Name>`).
+- Schema changes only through migrations (`npm run migration:generate -w api -- src/database/migrations/<Name> -p`).
+- **Every new table enables row level security in its migration** (`ALTER TABLE "x" ENABLE ROW LEVEL SECURITY`). Supabase exposes the `public` schema through its own REST API; RLS with no policies blocks that API, while our backend (table owner) keeps full access.
 - REST: plural nouns, correct verbs (`GET` read, `POST` create, `PATCH` partial update, `DELETE` remove), status codes 200/201/202/204/400/401/403/404/409/422/429.
 
 ## Frontend (React)

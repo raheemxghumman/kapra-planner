@@ -27,7 +27,7 @@ Values go **only** into `api/.env`, `web/.env.local` (both git-ignored) and the 
 | `DATABASE_URL` | Supabase → Project settings → Database → connection string (session pooler) |
 | `DATABASE_SSL` | `true` for Supabase, `false` for local Docker |
 | `WEB_ORIGIN` | `http://localhost:5173` locally; Vercel URL in production (CORS) |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Long random strings we generate (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) |
+| `JWT_ACCESS_SECRET` | Long random string we generate (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`) |
 | `GROQ_API_KEYS` | console.groq.com → API keys; comma-separated, rotated by `KeyPool` |
 | `GEMINI_API_KEYS` | aistudio.google.com → Get API key; comma-separated |
 | `HF_TOKEN` | huggingface.co → Settings → Access tokens (read) |

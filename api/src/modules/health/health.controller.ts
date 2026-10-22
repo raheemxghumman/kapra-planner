@@ -1,12 +1,14 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
+import { Public } from '../../common/decorators/public.decorator.js';
 
 /**
  * Used by the uptime pinger, Render's health check and the frontend's status badge.
  * It also runs `SELECT 1`, so a "healthy" answer means the database is reachable too.
  */
 @ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}

@@ -18,6 +18,8 @@ export function buildTypeOrmOptions(databaseUrl: string, useSsl: boolean): DataS
     type: 'postgres',
     url: databaseUrl,
     ssl: useSsl ? { rejectUnauthorized: false } : false,
+    // Use PostgreSQL's built-in gen_random_uuid() instead of the uuid-ossp extension.
+    uuidExtension: 'pgcrypto',
     entities: [toGlob(databaseDir, '..', '**', '*.entity.{ts,js}')],
     migrations: [toGlob(databaseDir, 'migrations', '*.{ts,js}')],
     // Never let TypeORM change the schema by itself; every change is a reviewed migration.

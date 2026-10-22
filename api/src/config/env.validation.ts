@@ -56,10 +56,6 @@ export class EnvironmentVariables {
   @MinLength(32)
   JWT_ACCESS_SECRET: string;
 
-  @IsString()
-  @MinLength(32)
-  JWT_REFRESH_SECRET: string;
-
   @Transform(toList)
   @ArrayNotEmpty()
   @IsString({ each: true })

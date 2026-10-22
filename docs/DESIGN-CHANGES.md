@@ -14,3 +14,4 @@ Changes to the Deliverable 2 design found while planning or coding. Each entry: 
 | 8 | 23 Oct 2026 | Groq model is `openai/gpt-oss-120b` (stylist) and `gpt-oss-20b` (tagging) | Llama 3.3 70B was retired by Groq | D2 1.5 |
 | 9 | 23 Oct 2026 | Stylist agent finishes through a `submitOutfit` tool | Structured final answer; spike showed free-text JSON can fail | D2 Fig. 15 |
 | 10 | 23 Oct 2026 | Several Groq and Gemini keys rotated automatically (`KeyPool`) | Stay within free limits | D2 1.6 |
+| 11 | 23 Oct 2026 | Row level security enabled on every table | Supabase's public REST API would otherwise expose tables (including password hashes) | D2 1.6, NFR-03 |

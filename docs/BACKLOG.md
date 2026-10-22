@@ -20,11 +20,11 @@ Lead: **A** = Abdulraheem, **W** = Wania (the other member reviews).
 
 ## Week 1 — Auth and roles (30 Oct – 5 Nov) · FR-01, FR-02, NFR-03, UC-01
 
-- [ ] T1.1 A: `User` entity (role enum: customer, brand, tailor, admin; status: active, pending, suspended), migration
-- [ ] T1.2 A: `POST /auth/register`, `POST /auth/login` with bcrypt; DTOs; login lockout after 5 failures for 15 min
-- [ ] T1.3 A: Access + refresh tokens; `refresh_tokens` table (hashed, rotated); `POST /auth/refresh`, `POST /auth/logout`
-- [ ] T1.4 A: `JwtAuthGuard` (global, with `@Public()` opt-out), `RolesGuard` + `@Roles()`, `@CurrentUser()` decorator
-- [ ] T1.5 A: Global exception filter, `LoggingInterceptor`, `RequestIdMiddleware`, helmet, throttler
+- [x] T1.1 A: `User` entity (role enum: customer, brand, tailor, admin; status: active, pending, suspended), migration
+- [x] T1.2 A: `POST /auth/register`, `POST /auth/login` with bcrypt; DTOs; login lockout after 5 failures for 15 min
+- [x] T1.3 A: Access + refresh tokens; `refresh_tokens` table (hashed, rotated); `POST /auth/refresh`, `POST /auth/logout`
+- [x] T1.4 A: `JwtAuthGuard` (global, with `@Public()` opt-out), `RolesGuard` + `@Roles()`, `@CurrentUser()` decorator
+- [x] T1.5 A: Global exception filter, `LoggingInterceptor`, `RequestIdMiddleware`, helmet, throttler
 - [ ] T1.6 A: Unit tests for auth service; e2e test register → login → refresh → logout
 - [ ] T1.7 W: `AuthContext` + `useAuth`; axios interceptors (attach token, refresh on 401 once)
 - [ ] T1.8 W: Login and register pages (role choice), `useForm` hook with validation, error display
