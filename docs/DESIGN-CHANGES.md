@@ -15,3 +15,10 @@ Changes to the Deliverable 2 design found while planning or coding. Each entry: 
 | 9 | 23 Oct 2026 | Stylist agent finishes through a `submitOutfit` tool | Structured final answer; spike showed free-text JSON can fail | D2 Fig. 15 |
 | 10 | 23 Oct 2026 | Several Groq and Gemini keys rotated automatically (`KeyPool`) | Stay within free limits | D2 1.6 |
 | 11 | 23 Oct 2026 | Row level security enabled on every table | Supabase's public REST API would otherwise expose tables (including password hashes) | D2 1.6, NFR-03 |
+| 12 | 23 Oct 2026 | `brands.owner_id` is nullable; brands are created from their public Shopify feeds and a brand user claims one later | The catalogue must exist before brands sign up | 3.4 ERD |
+| 13 | 23 Oct 2026 | `product_variants` stores `in_stock` (and `stock_qty` only when known) | Shop feeds give availability, not quantities | 3.4 ERD |
+| 14 | 23 Oct 2026 | Profile split into `style_profiles` (one per customer) and `measurement_profiles` (up to 10, e.g. "Me", "Mother") | Style preferences and tailoring measurements change separately; customers book tailors for family too | 3.4 ERD, 3.6 Class diagram |
+| 15 | 23 Oct 2026 | Stylist results stored as `stylist_requests` → `outfit_suggestions` → `outfit_items`; saving copies a suggestion into `outfits`. `suggestion_feedback` (like/dislike) | Customers can edit saved looks without changing the history; disliked products are left out next time | 3.4 ERD, Fig. 15 |
+| 16 | 23 Oct 2026 | Rule-based fallback stylist with the same validation rules | Free Groq limits or outages must not break the main feature | D2 1.6, Fig. 15 |
+| 17 | 23 Oct 2026 | Try-on: `person_photos` (max 3, deletable with their files) and `try_ons` (cached per photo + product, one running job per customer). Chain: IDM-VTON then Leffa | Testing showed IDM-VTON is better for every garment type, including suits; Leffa is the fallback when the free GPU is busy | 3.4 ERD, Fig. 16 |
+| 18 | 23 Oct 2026 | Cloudinary used through its signed REST API (no SDK) behind an `IMAGE_STORAGE` interface | Fewer dependencies; the signing is easy to explain | D2 1.6 |
