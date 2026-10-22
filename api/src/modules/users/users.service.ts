@@ -41,6 +41,14 @@ export class UsersService {
     return this.users.save(this.users.create({ ...data, email }));
   }
 
+  async updateProfile(
+    id: string,
+    data: Partial<Pick<User, 'name' | 'phone' | 'city'>>,
+  ): Promise<User> {
+    await this.users.update(id, data);
+    return this.users.findOneByOrFail({ id });
+  }
+
   async recordFailedLogin(user: User, maxAttempts: number, lockMinutes: number): Promise<void> {
     const attempts = user.failedLoginAttempts + 1;
     const lockedUntil =

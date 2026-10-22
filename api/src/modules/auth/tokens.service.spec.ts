@@ -23,7 +23,11 @@ describe('TokensService', () => {
   });
 
   beforeEach(() => {
-    repository = { insert: vi.fn(), findOne: vi.fn(), update: vi.fn().mockResolvedValue({ affected: 1 }) };
+    repository = {
+      insert: vi.fn(),
+      findOne: vi.fn(),
+      update: vi.fn().mockResolvedValue({ affected: 1 }),
+    };
     const jwtService = { signAsync: vi.fn().mockResolvedValue('signed-jwt') };
     service = new TokensService(
       jwtService as unknown as JwtService,

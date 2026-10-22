@@ -24,7 +24,9 @@ interface BrandSeed {
  *   npm run seed:catalogue -w api
  */
 async function seedCatalogue(): Promise<void> {
-  const app = await NestFactory.createApplicationContext(AppModule, { logger: ['log', 'warn', 'error'] });
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: ['log', 'warn', 'error'],
+  });
   try {
     const brands = app.get<Repository<Brand>>(getRepositoryToken(Brand));
     const file = new URL('../../../src/database/seeds/brands.json', import.meta.url);

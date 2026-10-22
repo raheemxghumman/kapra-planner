@@ -62,7 +62,12 @@ describe('AuthService', () => {
     });
 
     it.each([UserRole.Brand, UserRole.Tailor])('creates %s accounts as pending', async (role) => {
-      await service.register({ name: 'Shop', email: 's@example.com', password: 'secret-pass1', role });
+      await service.register({
+        name: 'Shop',
+        email: 's@example.com',
+        password: 'secret-pass1',
+        role,
+      });
       expect(usersService.create.mock.calls[0][0].status).toBe(UserStatus.Pending);
     });
   });
@@ -89,9 +94,9 @@ describe('AuthService', () => {
     it('records a failed attempt for a wrong password', async () => {
       const user = makeUser();
       usersService.findByEmailWithPassword.mockResolvedValue(user);
-      await expect(service.login({ email: user.email, password: 'wrong-pass1' })).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ email: user.email, password: 'wrong-pass1' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
       expect(usersService.recordFailedLogin).toHaveBeenCalledWith(user, 5, 15);
     });
 
@@ -105,7 +110,9 @@ describe('AuthService', () => {
     });
 
     it('refuses a suspended account', async () => {
-      usersService.findByEmailWithPassword.mockResolvedValue(makeUser({ status: UserStatus.Suspended }));
+      usersService.findByEmailWithPassword.mockResolvedValue(
+        makeUser({ status: UserStatus.Suspended }),
+      );
       await expect(
         service.login({ email: 'ayesha@example.com', password: 'correct-pass1' }),
       ).rejects.toBeInstanceOf(ForbiddenException);

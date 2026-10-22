@@ -63,7 +63,8 @@ export class ShopifyFeedClient {
         const body = (await response.json()) as { products?: FeedProduct[] };
         return body.products ?? [];
       }
-      const canRetry = (response.status === 429 || response.status >= 500) && attempt < RETRY_DELAYS_MS.length;
+      const canRetry =
+        (response.status === 429 || response.status >= 500) && attempt < RETRY_DELAYS_MS.length;
       if (!canRetry) {
         throw new Error(`Feed ${url.host} answered ${response.status} on page ${page}`);
       }

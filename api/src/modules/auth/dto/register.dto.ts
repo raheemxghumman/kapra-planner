@@ -45,7 +45,9 @@ export class RegisterDto {
    */
   @ValidateIf((dto: RegisterDto) => dto.role !== UserRole.Customer || dto.phone !== undefined)
   @Transform(trim)
-  @Matches(/^(\+92|0)3\d{9}$/, { message: 'phone must be a Pakistani mobile number like 03001234567' })
+  @Matches(/^(\+92|0)3\d{9}$/, {
+    message: 'phone must be a Pakistani mobile number like 03001234567',
+  })
   phone?: string;
 
   @IsOptional()

@@ -32,6 +32,11 @@ export interface Paginated<T> {
 export function paginate<T>(data: T[], total: number, query: PaginationQueryDto): Paginated<T> {
   return {
     data,
-    meta: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+    meta: {
+      page: query.page,
+      limit: query.limit,
+      total,
+      totalPages: Math.ceil(total / query.limit),
+    },
   };
 }

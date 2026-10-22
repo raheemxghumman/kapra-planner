@@ -58,10 +58,22 @@ export class Brand extends BaseEntity {
   tier: BrandTier;
 
   /** Used when a product's own text does not say who or what it is for. */
-  @Column({ name: 'default_gender', type: 'enum', enum: Gender, enumName: 'product_gender', default: Gender.Women })
+  @Column({
+    name: 'default_gender',
+    type: 'enum',
+    enum: Gender,
+    enumName: 'product_gender',
+    default: Gender.Women,
+  })
   defaultGender: Gender;
 
-  @Column({ name: 'default_style', type: 'enum', enum: WearStyle, enumName: 'wear_style', default: WearStyle.Eastern })
+  @Column({
+    name: 'default_style',
+    type: 'enum',
+    enum: WearStyle,
+    enumName: 'wear_style',
+    default: WearStyle.Eastern,
+  })
   defaultStyle: WearStyle;
 
   /** Only verified brands appear in the catalogue and the stylist. */

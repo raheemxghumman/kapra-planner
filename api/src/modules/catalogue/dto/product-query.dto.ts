@@ -1,11 +1,25 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination.dto.js';
 import { COLOURS, Gender, Occasion, ProductCategory, WearStyle } from '../catalogue.enums.js';
 
 /** "kurta,trousers" -> ["kurta", "trousers"], so several values fit in one query parameter. */
 const toArray = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.split(',').map((v) => v.trim()).filter(Boolean) : value;
+  typeof value === 'string'
+    ? value
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean)
+    : value;
 
 export const PRODUCT_SORTS = ['featured', 'newest', 'price_asc', 'price_desc'] as const;
 export type ProductSort = (typeof PRODUCT_SORTS)[number];

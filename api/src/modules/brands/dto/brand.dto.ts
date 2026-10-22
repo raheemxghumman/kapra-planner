@@ -1,5 +1,15 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUrl, Length, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 import { BrandTier, Gender, WearStyle } from '../../catalogue/catalogue.enums.js';
 
 export class CreateBrandDto {

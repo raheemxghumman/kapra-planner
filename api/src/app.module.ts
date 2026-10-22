@@ -15,6 +15,9 @@ import { LlmModule } from './integrations/llm/llm.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BrandsModule } from './modules/brands/brands.module.js';
 import { CatalogueModule } from './modules/catalogue/catalogue.module.js';
+import { ProfilesModule } from './modules/profiles/profiles.module.js';
+import { StylistModule } from './modules/stylist/stylist.module.js';
+import { WishlistModule } from './modules/wishlist/wishlist.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 
@@ -44,6 +47,9 @@ import { UsersModule } from './modules/users/users.module.js';
     AuthModule,
     BrandsModule,
     CatalogueModule,
+    ProfilesModule,
+    WishlistModule,
+    StylistModule,
   ],
   providers: [
     // Guards run in this order: rate limit -> valid JWT (unless @Public) -> role check.

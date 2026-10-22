@@ -61,7 +61,9 @@ export class TokensService {
     }
     if (stored.revokedAt) {
       await this.revokeAllForUser(stored.userId);
-      this.logger.warn(`Refresh token reuse detected for user ${stored.userId}; all sessions ended`);
+      this.logger.warn(
+        `Refresh token reuse detected for user ${stored.userId}; all sessions ended`,
+      );
       throw new UnauthorizedException('Session is no longer valid. Please log in again.');
     }
     if (stored.expiresAt <= new Date()) {

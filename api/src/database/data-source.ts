@@ -11,4 +11,6 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is not set');
 }
 
-export default new DataSource(buildTypeOrmOptions(databaseUrl, process.env.DATABASE_SSL === 'true'));
+export default new DataSource(
+  buildTypeOrmOptions(databaseUrl, process.env.DATABASE_SSL === 'true'),
+);

@@ -5,7 +5,9 @@ export class AllKeysExhaustedError extends Error {
     readonly poolName: string,
     readonly retryAt: Date,
   ) {
-    super(`All ${poolName} API keys are rate-limited. Next key is free at ${retryAt.toISOString()}.`);
+    super(
+      `All ${poolName} API keys are rate-limited. Next key is free at ${retryAt.toISOString()}.`,
+    );
     this.name = 'AllKeysExhaustedError';
   }
 }
@@ -78,8 +80,7 @@ export class KeyPool {
   }
 
   private rest(index: number, error: unknown): void {
-    const cooldown =
-      this.options.retryAfterMs?.(error) ?? this.options.defaultCooldownMs ?? 60_000;
+    const cooldown = this.options.retryAfterMs?.(error) ?? this.options.defaultCooldownMs ?? 60_000;
     this.restingUntil.set(index, this.now() + cooldown);
     this.logger.warn(
       `Key #${index + 1} of ${this.size} hit its limit; resting for ${Math.ceil(cooldown / 1000)}s`,

@@ -1,4 +1,12 @@
-import { Controller, DefaultValuePipe, Get, Param, ParseIntPipe, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  DefaultValuePipe,
+  Get,
+  Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator.js';
 import type { Paginated } from '../../common/dto/pagination.dto.js';
@@ -27,7 +35,9 @@ export class ProductsController {
 
   /** A random selection of products with photos (landing page). */
   @Get('featured')
-  featured(@Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit: number): Promise<Product[]> {
+  featured(
+    @Query('limit', new DefaultValuePipe(12), ParseIntPipe) limit: number,
+  ): Promise<Product[]> {
     return this.productsService.featured(Math.min(limit, 30));
   }
 
