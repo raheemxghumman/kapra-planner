@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../api/bookings.api';
+import {
+  listNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '../api/bookings.api';
 import { refreshSession } from '../api/session';
 import { tokenStore } from '../api/tokenStore';
 import { useAuth } from '../hooks/useAuth';
@@ -8,8 +12,14 @@ import { useToast } from '../hooks/useToast';
 import type { AppNotification } from '../types/panels';
 import { RealtimeContext, type RealtimeHandler } from './realtime-context';
 
-/** The API's origin, e.g. http://localhost:3000 (Socket.IO is served there, not under /api/v1). */
-const SOCKET_URL = new URL(import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1').origin;
+/**
+ * The API's origin, e.g. http://localhost:3000 (Socket.IO is served there, not under /api/v1).
+ * In production the API address is relative (/api/v1), so this is the site's own origin.
+ */
+const SOCKET_URL = new URL(
+  import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1',
+  window.location.origin,
+).origin;
 
 /**
  * One Socket.IO connection per signed-in user. It carries notifications, chat messages and
@@ -36,7 +46,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     // `auth` as a function: every (re)connect sends the current access token, not a stale one.
     const socket = io(SOCKET_URL, {
-      transports: ['websocket'],
+      // WebSocket first; long-polling only if a proxy on the way blocks WebSockets.
+      transports: ['websocket', 'polling'],
       auth: (send) => send({ token: tokenStore.getAccessToken() }),
     });
     socketRef.current = socket;
@@ -86,13 +97,20 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const markRead = useCallback((notification: AppNotification) => {
     if (notification.readAt) return;
     const readAt = new Date().toISOString();
-    setNotifications((all) => all.map((item) => (item.id === notification.id ? { ...item, readAt } : item)));
+    setNotifications((all) =>
+      all.map((item) => (item.id === notification.id ? { ...item, readAt } : item)),
+    );
     setUnread((count) => Math.max(0, count - 1));
     markNotificationRead(notification.id).catch(() => undefined);
   }, []);
 
   const markAllRead = useCallback(() => {
-    setNotifications((all) => all.map((notification) => ({ ...notification, readAt: notification.readAt ?? new Date().toISOString() })));
+    setNotifications((all) =>
+      all.map((notification) => ({
+        ...notification,
+        readAt: notification.readAt ?? new Date().toISOString(),
+      })),
+    );
     setUnread(0);
     markAllNotificationsRead().catch(() => undefined);
   }, []);

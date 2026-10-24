@@ -90,6 +90,13 @@ export class EnvironmentVariables {
 
   @IsString()
   NOMINATIM_USER_AGENT: string;
+
+  /**
+   * Folder with the built website (web/dist). When set, the API also serves the website, so
+   * both run as one container on one address. Empty in development (Vite serves it).
+   */
+  @IsString()
+  WEB_DIST = '';
 }
 
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {

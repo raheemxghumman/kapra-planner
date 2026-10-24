@@ -37,10 +37,12 @@ jobs:
       - name: Build
         run: npm run build
 
+  # On main the image is built and pushed by image.yml; here it is only checked for pull requests.
   docker:
-    name: Build API Docker image
+    name: Build Docker image
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build image (not pushed)
-        run: docker build -f api/Dockerfile -t kapra-api .
+        run: docker build -f api/Dockerfile -t kapra-planner .

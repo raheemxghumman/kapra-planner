@@ -1,23 +1,28 @@
 import { ClassSerializerInterceptor, Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { SocketIoAdapter } from './modules/realtime/socket-io.adapter.js';
+import { CONTENT_SECURITY_POLICY, serveWebApp } from './web-hosting.js';
 import type { EnvironmentVariables } from './config/env.validation.js';
 
 async function bootstrap(): Promise<void> {
   // rawBody is needed later to verify Stripe webhook signatures.
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
   const config = app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
 
   // All routes live under /api/v1/..., so a future v2 can run side by side.
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-  // Security headers (XSS protection, no MIME sniffing, etc.).
-  app.use(helmet());
+  // Security headers (XSS protection, no MIME sniffing, a content security policy, etc.).
+  app.use(helmet({ contentSecurityPolicy: CONTENT_SECURITY_POLICY }));
+
+  // In production the same server also serves the built website (see web-hosting.ts).
+  serveWebApp(app, config.get('WEB_DIST', { infer: true }));
 
   // Only our frontend may call the API from a browser.
   app.enableCors({ origin: config.get('WEB_ORIGIN', { infer: true }), credentials: true });
