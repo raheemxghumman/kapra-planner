@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { Link } from 'react-router';
+import { SceneBoundary } from '../three/SceneBoundary';
 
 const FabricScene = lazy(() => import('../three/FabricScene'));
 
@@ -51,9 +52,9 @@ export function SiteFooter({ withCta = true }: { withCta?: boolean }) {
             </Link>
           </div>
           <div className="h-[340px] md:h-[420px]">
-            <Suspense fallback={null}>
+            <SceneBoundary>
               <FabricScene distance={6.5} />
-            </Suspense>
+            </SceneBoundary>
           </div>
         </div>
       )}
@@ -61,8 +62,8 @@ export function SiteFooter({ withCta = true }: { withCta?: boolean }) {
       <div className="mx-auto grid max-w-[1400px] gap-10 px-5 pt-20 pb-10 sm:grid-cols-2 md:px-10 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <p className="max-w-xs text-sm leading-relaxed text-paper/60">
-            Kapra Planner brings Pakistani brands, virtual try-on and trusted local tailors into one place.
-            A semester project at Air University, Islamabad.
+            Kapra Planner brings Pakistani brands, virtual try-on and trusted local tailors into one
+            place. A semester project at Air University, Islamabad.
           </p>
         </div>
         {COLUMNS.map((column) => (

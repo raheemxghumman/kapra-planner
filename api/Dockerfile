@@ -13,6 +13,9 @@ COPY api api
 COPY web web
 # The website calls the API on its own address, so the API URL is relative.
 ENV VITE_API_URL=/api/v1
+# Release id (the commit SHA from CI) names the asset folder; see web/vite.config.ts.
+ARG RELEASE=dev
+ENV RELEASE=$RELEASE
 RUN npm run build --workspace api && npm run build --workspace web
 
 # ---- runtime stage: production dependencies, compiled API and the website files ----

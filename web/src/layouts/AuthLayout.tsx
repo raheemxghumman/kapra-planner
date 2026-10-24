@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { PageTransition } from '../components/ui/PageTransition';
+import { SceneBoundary } from '../components/three/SceneBoundary';
 
 const FabricScene = lazy(() => import('../components/three/FabricScene'));
 
@@ -49,9 +50,9 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
         </div>
 
         <aside className="relative hidden overflow-hidden bg-ink lg:block">
-          <Suspense fallback={null}>
+          <SceneBoundary>
             <FabricScene distance={7} />
-          </Suspense>
+          </SceneBoundary>
           {/* Dark fade behind the tagline keeps it readable over the light fabric. */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-ink via-ink/80 to-transparent" />
           <p className="absolute bottom-10 left-10 max-w-xs font-logo text-2xl leading-snug text-paper italic">

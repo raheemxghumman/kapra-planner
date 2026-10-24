@@ -43,7 +43,8 @@ export function serveWebApp(app: NestExpressApplication, webDist: string): void 
 export const CONTENT_SECURITY_POLICY = {
   directives: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
+    // Alternate Clouds serves the site through Cloudflare, which adds its analytics script.
+    scriptSrc: ["'self'", 'https://static.cloudflareinsights.com'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],

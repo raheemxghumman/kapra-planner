@@ -1,8 +1,9 @@
 import { motion, useScroll, useTransform } from 'motion/react';
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, useRef } from 'react';
 import { Link } from 'react-router';
 import { RevealText } from '../../components/motion/RevealText';
 import type { Product } from '../../types/catalogue';
+import { SceneBoundary } from '../../components/three/SceneBoundary';
 
 const LookbookScene = lazy(() => import('../../components/three/LookbookScene'));
 const FabricScene = lazy(() => import('../../components/three/FabricScene'));
@@ -25,7 +26,10 @@ export function HeroSection({ products }: { products: Product[] | undefined }) {
   return (
     <section ref={section} className="relative min-h-[100svh] overflow-hidden pt-16">
       <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-[1400px] grid-cols-1 items-center px-5 md:px-10 lg:grid-cols-12">
-        <motion.div style={{ y: textY, opacity: textOpacity }} className="relative z-10 py-10 lg:col-span-6">
+        <motion.div
+          style={{ y: textY, opacity: textOpacity }}
+          className="relative z-10 py-10 lg:col-span-6"
+        >
           <motion.p {...fade(0.1)} className="eyebrow flex items-center gap-3 text-muted">
             <span className="h-px w-10 bg-ink/40" />
             Outfit planner · Pakistan
@@ -50,7 +54,10 @@ export function HeroSection({ products }: { products: Product[] | undefined }) {
                 ↗
               </span>
             </Link>
-            <Link to="/shop" className="text-sm underline decoration-ink/30 underline-offset-[6px] hover:decoration-ink">
+            <Link
+              to="/shop"
+              className="text-sm underline decoration-ink/30 underline-offset-[6px] hover:decoration-ink"
+            >
               Browse the catalogue
             </Link>
           </motion.div>
@@ -62,9 +69,9 @@ export function HeroSection({ products }: { products: Product[] | undefined }) {
           transition={{ duration: 1.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="relative h-[52svh] lg:col-span-6 lg:h-[86svh]"
         >
-          <Suspense fallback={null}>
+          <SceneBoundary>
             {images.length >= 6 ? <LookbookScene images={images} /> : <FabricScene distance={6} />}
-          </Suspense>
+          </SceneBoundary>
           <p className="eyebrow pointer-events-none absolute right-0 bottom-6 text-muted">
             Real pieces · live prices · 12 brands
           </p>
