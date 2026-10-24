@@ -30,3 +30,4 @@ Changes to the Deliverable 2 design found while planning or coding. Each entry: 
 | 24 | 23 Oct 2026 | Booking states: pending_payment → requested → accepted → in_progress → ready → completed, plus cancelled and declined, enforced by one state-machine function | Each action allowed only from the right state and by the right person | 3.7 State diagram |
 | 25 | 23 Oct 2026 | `booking_events` (timeline) and `messages` (chat) tables; live updates through Socket.IO rooms per user | Order tracking and chat (instructor feedback) | 3.4 ERD |
 | 26 | 23 Oct 2026 | Email through an `EMAIL_SENDER` interface, logged to the console until the Resend domain exists | The domain will be bought at deployment | D2 1.6 |
+| 27 | 24 Oct 2026 | Hosted on Alternate Clouds as one container (API serves the built website) instead of Render + Vercel | About $2 a month pay-as-you-go from existing credits, no sleeping; one address means no CORS or cross-site setup | D2 1.6, Fig. deployment |

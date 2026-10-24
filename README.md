@@ -3,6 +3,8 @@
 AI stylist for Pakistani brands with virtual try-on, tailor booking, Stripe payments, order tracking and chat.
 CS-301 Full Stack Web Development, Air University Islamabad, Fall 2026 — Abdulraheem (241854), Wania Rahman (241830).
 
+**Live:** https://kapra-planner-app.alternatefutures.ai (Alternate Clouds)
+
 **Stack:** React 19 + Vite + Tailwind CSS + Motion + React Three Fiber · NestJS 12 + TypeORM · PostgreSQL (Supabase) · Groq · Hugging Face try-on · Stripe (test) · OpenStreetMap · Cloudinary · GitHub Actions · Render · Vercel
 
 ## What it does
@@ -59,3 +61,13 @@ npm run dev:web                  # http://localhost:5173
 | Admin | `admin@kapra.test` | from `ADMIN_PASSWORD` in `api/.env` |
 
 Stripe is in test mode: pay with card `4242 4242 4242 4242`, any future date and any CVC.
+
+## Deployment (Alternate Clouds)
+
+One Docker container: the NestJS API also serves the built React app (`WEB_DIST`), so the site and API share one address.
+
+1. Push to `main` → `image.yml` builds `ghcr.io/raheemxghumman/kapra-planner:<commit sha>` (the package is public; the repo stays private).
+2. Deploy that tag: `acc services deploy kapra-planner --image ghcr.io/raheemxghumman/kapra-planner:<sha> --cpu 1 --memory 1Gi --spend payg -y`
+3. Environment variables live on the service (`acc services env list kapra-planner`); none are in the image or the repo. `WEB_ORIGIN` is the site address.
+
+The container runs pending migrations on start. Each release builds its files into `assets/<sha>/`, so Cloudflare (in front of Alternate Clouds) never serves files from an older release.
