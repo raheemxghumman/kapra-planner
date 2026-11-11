@@ -1,20 +1,22 @@
-import type { PoseLandmarker } from '@mediapipe/tasks-vision';
-import { Camera, Minus, Plus, ScanFace, SwitchCamera, X } from 'lucide-react';
+import { Camera, Minus, Plus, ScanFace, Sparkles, SwitchCamera, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { getProduct, searchProducts } from '../../api/catalogue.api';
 import {
-  bodyPoints,
   checkFraming,
   FRAMING_HINTS,
-  garmentMatrix,
+  POSE,
   smoothLandmarks,
+  type BodyPoints,
   type Framing,
   type Landmark,
 } from '../../components/live-tryon/fit';
-import { createPoseTracker } from '../../components/live-tryon/pose-tracker';
+import { RealisticTryOn } from '../../components/live-tryon/RealisticTryOn';
+import { LiveRenderer } from '../../components/live-tryon/renderer';
 import { useCamera } from '../../components/live-tryon/useCamera';
+import { findModelBody, loadVision, type Vision } from '../../components/live-tryon/vision';
+import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { useToast } from '../../hooks/useToast';
 import type { GarmentFit } from '../../types/catalogue';
@@ -28,12 +30,14 @@ const SIZE_STEP = 0.05;
 /**
  * Live (AR) try-on. The camera picture is drawn on a canvas every frame; MediaPipe Pose finds
  * the body, and the product's transparent cut-out is drawn on top with a transform that pins
- * its shoulder line to the user's shoulders. Everything runs on the device.
+ * its collar to the base of the user's neck (see LiveRenderer). Everything runs on the device.
+ * "Make it realistic" turns the same moment into a photo-realistic AI try-on.
  */
 export function LiveTryOnPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const product = useApi((signal) => getProduct(id, signal), [id]);
   const live = product.data?.liveTryOn ?? null;
 
@@ -42,8 +46,9 @@ export function LiveTryOnPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const camera = useCamera(videoRef, facing);
 
-  const [tracker, setTracker] = useState<PoseLandmarker | null>(null);
+  const [vision, setVision] = useState<Vision | null>(null);
   const [trackerFailed, setTrackerFailed] = useState(false);
+  const [realistic, setRealistic] = useState(false);
   const [framing, setFraming] = useState<Framing>('no-person');
   const [locked, setLocked] = useState(false);
   const [size, setSize] = useState(1);
@@ -51,7 +56,10 @@ export function LiveTryOnPage() {
   // The drawing loop runs 30-60 times a second, so it reads these refs instead of React state.
   const garmentRef = useRef<HTMLImageElement | null>(null);
   const fitRef = useRef<GarmentFit | null>(null);
+  const modelBodyRef = useRef<BodyPoints | null>(null);
   const sizeRef = useRef(1);
+  const landmarksRef = useRef<Landmark[] | null>(null);
+  const mirroredRef = useRef(true);
   useEffect(() => {
     sizeRef.current = size;
   }, [size]);
@@ -65,15 +73,15 @@ export function LiveTryOnPage() {
     [product.data?.category],
   );
 
-  // Load the body-tracking model once.
+  // Load the body-tracking models once.
   useEffect(() => {
     let active = true;
-    let loaded: PoseLandmarker | null = null;
-    createPoseTracker()
-      .then((model) => {
-        loaded = model;
-        if (active) setTracker(model);
-        else model.close();
+    let loaded: Vision | null = null;
+    loadVision()
+      .then((models) => {
+        loaded = models;
+        if (active) setVision(models);
+        else models.close();
       })
       .catch(() => active && setTrackerFailed(true));
     return () => {
@@ -90,11 +98,24 @@ export function LiveTryOnPage() {
     image.crossOrigin = 'anonymous';
     image.src = live.cutoutUrl;
     garmentRef.current = image;
+
+    // For a photo of a model, find the model's joints so the garment is pinned joint to joint.
+    modelBodyRef.current = null;
+    let current = true;
+    if (live.modelPhotoUrl) {
+      findModelBody(live.modelPhotoUrl, live.fit)
+        .then((body) => current && (modelBodyRef.current = body))
+        .catch(() => undefined); // keeps the collar rule
+    }
+    return () => {
+      current = false;
+    };
   }, [live]);
 
   // The camera + tracking + drawing loop.
   useEffect(() => {
-    if (camera.status !== 'ready' || !tracker) return;
+    if (camera.status !== 'ready' || !vision) return;
+    const renderer = new LiveRenderer(vision.segmenter);
     let frame = 0;
     let lastVideoTime = -1;
     let landmarks: Landmark[] | null = null;
@@ -124,8 +145,9 @@ export function LiveTryOnPage() {
         canvas.height = height;
       }
 
-      const found = tracker.detectForVideo(video, performance.now()).landmarks[0];
+      const found = vision.pose.detectForVideo(video, performance.now()).landmarks[0];
       landmarks = found ? smoothLandmarks(landmarks, found) : null;
+      landmarksRef.current = landmarks;
       const fit = fitRef.current;
       const next = checkFraming(landmarks ?? undefined, fit?.anchor ?? 'shoulders', width / height);
 
@@ -139,29 +161,37 @@ export function LiveTryOnPage() {
       if (next !== lastFraming) setFraming((lastFraming = next));
       setLocked(isLocked);
 
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      context.drawImage(video, 0, 0, width, height);
       const garment = garmentRef.current;
-      if (
+      const showGarment =
         isLocked &&
         landmarks &&
         fit &&
         garment?.complete &&
         garment.naturalWidth > 0 &&
-        next !== 'no-person'
-      ) {
-        context.setTransform(
-          ...garmentMatrix(bodyPoints(landmarks, fit.anchor, width, height), fit, sizeRef.current),
-        );
-        context.drawImage(garment, 0, 0, fit.width, fit.height);
-        context.setTransform(1, 0, 0, 1, 0, 0);
-      }
+        next !== 'no-person';
+      renderer.draw(
+        context,
+        video,
+        showGarment
+          ? {
+              garment,
+              fit,
+              landmarks: landmarks!,
+              size: sizeRef.current,
+              modelBody: modelBodyRef.current,
+              mirrored: mirroredRef.current,
+            }
+          : null,
+      );
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [camera.status, tracker]);
+  }, [camera.status, vision]);
 
   const mirrored = facing === 'user';
+  useEffect(() => {
+    mirroredRef.current = mirrored;
+  }, [mirrored]);
 
   /** Saves what the user sees (mirrored like a mirror for the front camera) as a JPEG. */
   const savePhoto = () => {
@@ -194,6 +224,33 @@ export function LiveTryOnPage() {
     }
   };
 
+  /**
+   * The photo for "Make it realistic": the camera picture alone (no AR garment), cropped to a
+   * portrait around the person, which suits the AI try-on model best.
+   */
+  const capturePhoto = useCallback(async (): Promise<Blob | null> => {
+    const video = videoRef.current;
+    const landmarks = landmarksRef.current;
+    if (!video || !video.videoWidth || !landmarks) return null;
+    const { videoWidth: width, videoHeight: height } = video;
+    const centre = ((landmarks[POSE.leftShoulder].x + landmarks[POSE.rightShoulder].x) / 2) * width;
+    const cropWidth = Math.min(width, Math.round(height * 0.75));
+    const left = Math.round(Math.min(Math.max(0, centre - cropWidth / 2), width - cropWidth));
+    const photo = document.createElement('canvas');
+    photo.width = cropWidth;
+    photo.height = height;
+    photo.getContext('2d')!.drawImage(video, left, 0, cropWidth, height, 0, 0, cropWidth, height);
+    return new Promise((resolve) => photo.toBlob(resolve, 'image/jpeg', 0.92));
+  }, []);
+
+  /** The AI try-on saves to the customer's account, so it needs a customer login. */
+  const makeRealistic = () => {
+    if (!user) return navigate('/login', { state: { from: `/live/${id}` } });
+    if (user.role !== 'customer')
+      return toast({ title: 'Switch to a customer account for this', tone: 'info' });
+    setRealistic(true);
+  };
+
   const status =
     camera.status === 'error'
       ? camera.message
@@ -201,7 +258,7 @@ export function LiveTryOnPage() {
         ? 'Body tracking could not be loaded on this device.'
         : camera.status === 'starting'
           ? 'Starting the camera…'
-          : !tracker
+          : !vision
             ? 'Loading body tracking…'
             : null;
 
@@ -223,6 +280,14 @@ export function LiveTryOnPage() {
         />
 
         {!locked && !status && <FrameGuide ready={framing === 'ready'} />}
+
+        {realistic && product.data && (
+          <RealisticTryOn
+            product={product.data}
+            capture={capturePhoto}
+            onClose={() => setRealistic(false)}
+          />
+        )}
 
         <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 bg-gradient-to-b from-ink/70 to-transparent p-4">
           <Link
@@ -324,12 +389,14 @@ export function LiveTryOnPage() {
           >
             <Camera size={22} />
           </button>
-          <Link
-            to={`/app/try-on?product=${id}`}
-            className="w-[7.5rem] text-right text-xs text-paper/70 underline-offset-4 hover:underline"
+          <button
+            type="button"
+            onClick={makeRealistic}
+            disabled={!locked}
+            className="flex items-center gap-1.5 rounded-full bg-blush px-4 py-2.5 text-xs font-semibold text-ink transition-opacity disabled:opacity-40"
           >
-            Realistic photo try-on
-          </Link>
+            <Sparkles size={14} /> Make it realistic
+          </button>
         </div>
 
         {pieces.data && pieces.data.data.length > 1 && (

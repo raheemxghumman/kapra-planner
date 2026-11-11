@@ -46,11 +46,15 @@ export interface GarmentFit {
   centerX: number;
   anchorY: number;
   bodyWidth: number;
+  /** Where the cut-out lies in its product photo (shares of the photo's width and height). */
+  source?: { x: number; y: number; width: number; height: number };
 }
 
 export interface LiveTryOn {
   cutoutUrl: string;
   fit: GarmentFit;
+  /** The product photo of a model the cut-out came from; null for a flat-lay. */
+  modelPhotoUrl: string | null;
 }
 
 export interface Product {

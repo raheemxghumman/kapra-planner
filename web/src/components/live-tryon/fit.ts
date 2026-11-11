@@ -92,11 +92,14 @@ export function checkFraming(
  * - ratio: torso length (shoulders to hips) or thigh length (hips to knees) divided by that
  *   joint distance when facing the camera. It keeps the garment's length right when the user
  *   turns sideways and their shoulders look narrower.
- * - lift: how far the garment's anchor line sits above the joints (shoulder seams sit on top
- *   of the shoulders; a waistband sits above the hip joints), as a share of the body width.
+ * - lift: how far the garment's anchor line sits above the joints, as a share of the body
+ *   width: shoulder seams lie on top of the shoulder joints; a waistband sits above the hips.
+ * ease and lift were measured on product photos of models, by comparing the garment's outline
+ * with the model's own shoulder joints (a polo: flat width 1.39x the joint distance, shoulder
+ * line 0.13x above the joints).
  */
 export const BODY = {
-  shoulders: { ease: 1.4, ratio: 1.45, lift: 0.05 },
+  shoulders: { ease: 1.4, ratio: 1.8, lift: 0.13 },
   hips: { ease: 1.35, ratio: 1.8, lift: 0.5 },
 } as const;
 
@@ -147,6 +150,56 @@ export function garmentMatrix(
     origin.x - a * fit.centerX - c * fit.anchorY,
     origin.y - b * fit.centerX - d * fit.anchorY,
   ];
+}
+
+/** Anchor joints and the joints below them, as they appear in an (unmirrored) picture. */
+export interface BodyPoints {
+  left: Point;
+  right: Point;
+  lowerLeft: Point;
+  lowerRight: Point;
+}
+
+/**
+ * Joint-to-joint fit, used when the cut-out comes from a photo of a model: the transform that
+ * moves the model's shoulders (or hips) onto the user's, and the middle of the model's hips
+ * (or knees) onto the user's. It is built from two axes per body (across and down):
+ *   matrix = userAxes × inverse(modelAxes)
+ * so it follows the user's leaning and turning with no guessed body proportions.
+ */
+export function bodyMatrix(model: BodyPoints, user: BodyPoints, sizeScale = 1): Matrix {
+  const axes = (body: BodyPoints) => {
+    const top = { x: (body.left.x + body.right.x) / 2, y: (body.left.y + body.right.y) / 2 };
+    const bottom = {
+      x: (body.lowerLeft.x + body.lowerRight.x) / 2,
+      y: (body.lowerLeft.y + body.lowerRight.y) / 2,
+    };
+    return {
+      top,
+      across: { x: body.right.x - body.left.x, y: body.right.y - body.left.y },
+      down: { x: bottom.x - top.x, y: bottom.y - top.y },
+    };
+  };
+  const m = axes(model);
+  const u = axes(user);
+  // Inverse of the 2x2 matrix whose columns are the model's across and down axes.
+  const det = m.across.x * m.down.y - m.down.x * m.across.y;
+  const inv = { a: m.down.y / det, b: -m.across.y / det, c: -m.down.x / det, d: m.across.x / det };
+  // userAxes × inverse(modelAxes), scaled by the Fit control around the user's anchor point.
+  const a = sizeScale * (u.across.x * inv.a + u.down.x * inv.b);
+  const b = sizeScale * (u.across.y * inv.a + u.down.y * inv.b);
+  const c = sizeScale * (u.across.x * inv.c + u.down.x * inv.d);
+  const d = sizeScale * (u.across.y * inv.c + u.down.y * inv.d);
+  return [a, b, c, d, u.top.x - a * m.top.x - c * m.top.y, u.top.y - b * m.top.x - d * m.top.y];
+}
+
+/**
+ * Mirrors the garment left-to-right inside its own image. The front-camera view is shown
+ * mirrored (like a mirror); drawing the garment pre-mirrored keeps its printed text readable.
+ */
+export function mirrorGarment([a, b, c, d, e, f]: Matrix, garmentWidth: number): Matrix {
+  // matrix × flip, where flip maps x -> garmentWidth - x.
+  return [-a, -b, c, d, a * garmentWidth + e, b * garmentWidth + f];
 }
 
 /** Applies a canvas transform to a point (used by the tests and the debug view). */
@@ -202,3 +255,55 @@ export function bodyPoints(
         lowerRight: px(POSE.leftKnee),
       };
 }
+
+/** Classes of MediaPipe's multiclass selfie segmenter (selfie_multiclass_256x256). */
+export const SEGMENT = {
+  background: 0,
+  hair: 1,
+  bodySkin: 2,
+  faceSkin: 3,
+  clothes: 4,
+  others: 5,
+} as const;
+
+/**
+ * Which camera pixels belong in front of the garment, as an RGBA alpha mask (255 = in front):
+ * face and hair always, and skin (arms, hands) below `skinFromRow`, so a hand crossing the
+ * body covers the garment as it would in real life. The neck stays behind, or it would cut
+ * through the collar.
+ */
+export function occluderMask(
+  categories: Uint8Array,
+  width: number,
+  height: number,
+  skinFromRow: number,
+  out = new Uint8ClampedArray(width * height * 4),
+): Uint8ClampedArray {
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
+      const category = categories[i];
+      const inFront =
+        category === SEGMENT.hair ||
+        category === SEGMENT.faceSkin ||
+        (category === SEGMENT.bodySkin && y >= skinFromRow);
+      out[i * 4 + 3] = inFront ? 255 : 0;
+    }
+  }
+  return out;
+}
+
+/** Average brightness (0 to 1) of RGBA pixels, weighted like the human eye sees colour. */
+export function averageLuma(rgba: Uint8ClampedArray): number {
+  let sum = 0;
+  for (let i = 0; i < rgba.length; i += 4)
+    sum += 0.2126 * rgba[i] + 0.7152 * rgba[i + 1] + 0.0722 * rgba[i + 2];
+  return rgba.length ? sum / (rgba.length / 4) / 255 : 0.5;
+}
+
+/**
+ * How bright to draw the garment so it matches the room: product photos are lit like a studio,
+ * so in a dim room the garment is darkened (never brightened beyond the photo).
+ */
+export const garmentBrightness = (sceneLuma: number) =>
+  Math.min(1, Math.max(0.55, (sceneLuma / 0.5) ** 0.7));

@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 import type { GarmentFit } from '../../types/catalogue';
 import {
   applyMatrix,
+  averageLuma,
+  bodyMatrix,
   BODY,
   checkFraming,
+  garmentBrightness,
   garmentMatrix,
+  mirrorGarment,
+  occluderMask,
   POSE,
+  SEGMENT,
   smoothLandmarks,
   type Landmark,
 } from './fit';
@@ -75,8 +81,8 @@ describe('garmentMatrix', () => {
   const upright = {
     left: { x: 400, y: 300 },
     right: { x: 600, y: 300 },
-    lowerLeft: { x: 420, y: 590 },
-    lowerRight: { x: 580, y: 590 },
+    lowerLeft: { x: 420, y: 660 },
+    lowerRight: { x: 580, y: 660 },
   };
 
   it('puts the shoulder line just above the shoulders, centred', () => {
@@ -131,5 +137,86 @@ describe('smoothLandmarks', () => {
   it('jumps straight to the new place after a big move', () => {
     const [point] = smoothLandmarks([{ x: 0.2, y: 0.5 }], [{ x: 0.6, y: 0.5 }]);
     expect(point.x).toBe(0.6);
+  });
+});
+
+describe('occluderMask', () => {
+  it('keeps face, hair and low skin in front, but not the neck', () => {
+    // A 1x4 column: hair, face, neck skin (row 2), hand skin (row 3).
+    const categories = Uint8Array.from([
+      SEGMENT.hair,
+      SEGMENT.faceSkin,
+      SEGMENT.bodySkin,
+      SEGMENT.bodySkin,
+    ]);
+    const alpha = occluderMask(categories, 1, 4, 3).filter((_, i) => i % 4 === 3);
+    expect([...alpha]).toEqual([255, 255, 0, 255]);
+  });
+
+  it('leaves clothes and background behind the garment', () => {
+    const categories = Uint8Array.from([SEGMENT.clothes, SEGMENT.background]);
+    expect([...occluderMask(categories, 2, 1, 0).filter((_, i) => i % 4 === 3)]).toEqual([0, 0]);
+  });
+});
+
+describe('lighting', () => {
+  it('measures brightness', () => {
+    expect(averageLuma(Uint8ClampedArray.from([255, 255, 255, 255, 0, 0, 0, 255]))).toBeCloseTo(
+      0.5,
+    );
+  });
+
+  it('darkens the garment in a dim room but never brightens it', () => {
+    expect(garmentBrightness(0.2)).toBeLessThan(0.6);
+    expect(garmentBrightness(0.9)).toBe(1);
+    expect(garmentBrightness(0)).toBe(0.55);
+  });
+});
+
+describe('bodyMatrix', () => {
+  const model = {
+    left: { x: 100, y: 50 },
+    right: { x: 200, y: 50 },
+    lowerLeft: { x: 110, y: 200 },
+    lowerRight: { x: 190, y: 200 },
+  };
+
+  it('moves the model joints exactly onto the user joints', () => {
+    const user = {
+      left: { x: 400, y: 300 },
+      right: { x: 600, y: 300 },
+      lowerLeft: { x: 420, y: 600 },
+      lowerRight: { x: 580, y: 600 },
+    };
+    const matrix = bodyMatrix(model, user);
+    expect(applyMatrix(matrix, model.left)).toEqual({ x: 400, y: 300 });
+    expect(applyMatrix(matrix, model.right)).toEqual({ x: 600, y: 300 });
+    const hips = applyMatrix(matrix, { x: 150, y: 200 });
+    expect(hips.x).toBeCloseTo(500);
+    expect(hips.y).toBeCloseTo(600);
+  });
+
+  it('is the identity when the bodies match', () => {
+    const matrix = bodyMatrix(model, model);
+    [1, 0, 0, 1, 0, 0].forEach((value, i) => expect(matrix[i]).toBeCloseTo(value));
+  });
+});
+
+describe('mirrorGarment', () => {
+  it('swaps the garment left and right edges in place', () => {
+    const matrix = garmentMatrix(
+      {
+        left: { x: 400, y: 300 },
+        right: { x: 600, y: 300 },
+        lowerLeft: { x: 420, y: 660 },
+        lowerRight: { x: 580, y: 660 },
+      },
+      shirt,
+    );
+    const mirrored = mirrorGarment(matrix, shirt.width);
+    const leftEdge = applyMatrix(matrix, { x: 0, y: 100 });
+    const mirroredRightEdge = applyMatrix(mirrored, { x: shirt.width, y: 100 });
+    expect(mirroredRightEdge.x).toBeCloseTo(leftEdge.x);
+    expect(mirroredRightEdge.y).toBeCloseTo(leftEdge.y);
   });
 });
