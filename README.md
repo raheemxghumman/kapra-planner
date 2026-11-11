@@ -21,6 +21,7 @@ Deployed on **Alternate Clouds**
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 ![Stripe](https://img.shields.io/badge/Stripe_(test)-635BFF?style=for-the-badge&logo=stripe&logoColor=white)
 ![Groq](https://img.shields.io/badge/Groq_LLM-F55036?style=for-the-badge&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe_Pose-0097A7?style=for-the-badge&logo=google&logoColor=white)
 ![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
 ![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=for-the-badge&logo=openstreetmap&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
@@ -68,7 +69,7 @@ Kapra puts the whole journey in one place, for four kinds of users.
 
 | | Role | What they get |
 |:-:|---|---|
-| 🛍️ | **Customer** | **AI stylist** that builds 2–3 complete looks from real, in-stock pieces in their size and budget · **virtual try-on** on their own photo · saved looks with piece swaps · **tailor map** ranked by reviews · **booking with Stripe**, live tracking and chat · checkout with partner brands |
+| 🛍️ | **Customer** | **AI stylist** that builds 2–3 complete looks from real, in-stock pieces in their size and budget · **live AR try-on** with the camera · **virtual try-on** on their own photo · saved looks with piece swaps · **tailor map** ranked by reviews · **booking with Stripe**, live tracking and chat · checkout with partner brands |
 | ✂️ | **Tailor** | Shop on the map with a pin, priced services and a gallery · paid booking requests with the customer's measurements and the look to stitch · accept, decline, progress, chat · reply to reviews · their **Kapra score** explained |
 | 🏷️ | **Brand** | Catalogue synced every night from their shop feed · hide pieces, stock per size, hand-listed pieces · store locations on the map · orders with tracking numbers · 30-day sales and interest analytics |
 | 🛡️ | **Admin** | Platform stats · approve or suspend accounts · link brand accounts to their brands · run the catalogue sync · moderate reviews flagged by the language model |
@@ -315,7 +316,43 @@ sequenceDiagram
 
 Results are cached per photo and piece, and each customer runs one job at a time because the free GPUs are shared.
 
-### 3. Booking a tailor and paying with Stripe
+### 3. Live AR try-on (camera, on the device)
+
+Open **Try on live with your camera** on a product page (or filter the shop by *Live with your camera*). The outfit appears on you in the camera view and follows you as you move.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Inter, Segoe UI, sans-serif','fontSize':'13px','lineColor':'#7A746B','edgeLabelBackground':'#F4F1EA'}}}%%
+flowchart LR
+  subgraph Night["Nightly job (GitHub Actions)"]
+    P["Product photos"] --> SEG["segformer_b2_clothes<br/>labels every pixel"]
+    SEG --> PICK["Pick a flat-lay or a front<br/>model photo; reject cropped,<br/>back views, odd shapes"]
+    PICK --> CUT["Transparent cut-out +<br/>shoulder line, body width"]
+  end
+  CUT -->|Cloudinary + garment_cutouts| API["GET /products/:id<br/>liveTryOn"]
+  subgraph Device["The shopper's browser"]
+    CAM["Camera"] --> POSE["MediaPipe Pose<br/>33 body points"]
+    POSE --> FRAME["Framing coach<br/>step back / hold still"]
+    POSE --> MAT["Affine transform<br/>shoulders → garment"]
+    MAT --> DRAW["Canvas: camera +<br/>garment every frame"]
+  end
+  API --> MAT
+
+  classDef job fill:#2B2926,stroke:#2B2926,color:#F4F1EA
+  classDef ai fill:#FBE3C8,stroke:#D9772B,color:#5A2E0C
+  classDef client fill:#E8C9C0,stroke:#8C3B2E,color:#2B2926
+  classDef server fill:#DCE3CF,stroke:#4F5A3A,color:#2B2926
+  class P,PICK,CUT job
+  class SEG,POSE ai
+  class CAM,FRAME,MAT,DRAW client
+  class API server
+```
+
+- **Cut-outs:** the pre-trained clothes-segmentation model [`segformer_b2_clothes`](https://huggingface.co/mattmdjaga/segformer_b2_clothes) keeps only the garment. A flat-lay (the garment alone, which many brands show) is preferred; a model photo is used only when the face is visible (so not a back view) and the garment is not cut off by the photo edge. Each cut-out is scored for symmetry and proportions, and only clean ones are offered.
+- **Fitting:** MediaPipe Pose finds the shoulders and hips in every camera frame. `garmentMatrix()` scales the garment so its body is about 1.4× the shoulder-joint width, rotates it with the shoulders, keeps its length when the user turns sideways, and pins its shoulder line just above theirs. Trousers are pinned to the hips and knees instead.
+- **Private and free:** tracking runs in the browser (WebAssembly, served by our own site), so camera frames never leave the device and the server does no work.
+- **Limits:** it is a 2D overlay, so sleeves do not follow raised arms and arms do not pass in front of the garment; the realistic photo try-on is one tap away for that.
+
+### 4. Booking a tailor and paying with Stripe
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'Inter, Segoe UI, sans-serif','actorBkg':'#E8C9C0','actorBorder':'#8C3B2E','signalColor':'#2B2926','noteBkgColor':'#E6DDF2','noteBorderColor':'#6A3D8F'}}}%%
@@ -349,7 +386,7 @@ sequenceDiagram
 - Payment is confirmed by **asking Stripe** on return, and by **signed webhooks** once a webhook secret is set. Both use one conditional update, so a payment is processed exactly once.
 - Declines and cancellations after payment are **refunded automatically**.
 
-### 4. Live updates
+### 5. Live updates
 
 Every browser opens one Socket.IO connection, authenticated with the same access token as the REST API. The server puts it in a private room `user:<id>` and pushes **notifications, chat messages and status changes** there. Clients never choose rooms, so nobody can listen to someone else's booking.
 
@@ -540,7 +577,7 @@ REST under `/api/v1`, documented with **Swagger at `/api/docs`**.
 | Backend | **NestJS 12** (ES modules), TypeORM, class-validator, Swagger | Modules, dependency injection, guards, pipes, interceptors |
 | Database | **PostgreSQL 17** on Supabase | Relational data, arrays, JSONB, row level security |
 | Real time | **Socket.IO** | Notifications, chat, live statuses |
-| AI | **Groq** (`gpt-oss-120b` stylist, `gpt-oss-20b` tagging) · **IDM-VTON / Leffa** on Hugging Face · **multilingual BERT** via Transformers.js | All free tiers; heavy work kept off the server |
+| AI | **Groq** (`gpt-oss-120b` stylist, `gpt-oss-20b` tagging) · **IDM-VTON / Leffa** on Hugging Face · **segformer_b2_clothes** (cut-outs) · **MediaPipe Pose** (live AR, in the browser) · **multilingual BERT** via Transformers.js | All free tiers; heavy work kept off the server |
 | Payments | **Stripe Checkout** (test mode, PKR) | Hosted page keeps cards off our server |
 | Maps | **OpenStreetMap** + Leaflet, **Nominatim** geocoding (cached, 1 request/second) | Free and open |
 | Images | **Cloudinary** (signed REST uploads) | Photos, try-on results, galleries |
@@ -624,7 +661,7 @@ flowchart LR
   IMG --> GHCR[("ghcr.io/raheemxghumman/<br/>kapra-planner:&lt;sha&gt;")]
   GHCR --> DEP["acc services deploy<br/>Alternate Clouds"]
   DEP --> LIVE["kapra-planner-app<br/>.alternatefutures.ai"]
-  N["nightly 02:30 PKT"] --> J["jobs.yml<br/>review sentiment · catalogue sync"]
+  N["nightly 02:30 PKT"] --> J["jobs.yml<br/>review sentiment · cut-outs · catalogue sync"]
 
   classDef step fill:#DCE3CF,stroke:#4F5A3A,color:#2B2926
   classDef store fill:#D6E4F0,stroke:#3460A8,color:#1F2A4D
@@ -681,6 +718,7 @@ Animations respect the system's **reduced motion** setting.
 |---|---|
 | Payments in Stripe **test mode**; refunds wait for approval in the Stripe dashboard | Live mode with a webhook secret |
 | Receipt emails are written to the server log | Resend with the project's own domain |
+| Live AR try-on is a 2D overlay (sleeves do not follow raised arms) | Bend sleeves along the arm points |
 | Try-on cuts long kurtas to shirt length (IDM-VTON) | FASHN VTON v1.5 (open source) as the first try-on provider for full-length outfits |
 | Roman Urdu reviews are scored less reliably | Fine-tune the sentiment model on Roman Urdu reviews |
 | Brands without a linked account are catalogue only (buy on their site) | Onboard brands as partners |
