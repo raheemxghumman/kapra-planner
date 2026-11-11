@@ -1,0 +1,135 @@
+import { describe, expect, it } from 'vitest';
+import type { GarmentFit } from '../../types/catalogue';
+import {
+  applyMatrix,
+  BODY,
+  checkFraming,
+  garmentMatrix,
+  POSE,
+  smoothLandmarks,
+  type Landmark,
+} from './fit';
+
+const shirt: GarmentFit = {
+  anchor: 'shoulders',
+  width: 400,
+  height: 450,
+  centerX: 200,
+  anchorY: 40,
+  bodyWidth: 250,
+};
+
+/** A person facing the camera, as normalised MediaPipe points. */
+function person(overrides: Partial<Record<number, Landmark>> = {}): Landmark[] {
+  const points: Landmark[] = Array.from({ length: 33 }, () => ({
+    x: 0.5,
+    y: 0.5,
+    visibility: 0.9,
+  }));
+  points[POSE.nose] = { x: 0.5, y: 0.2, visibility: 0.99 };
+  points[POSE.leftShoulder] = { x: 0.6, y: 0.35, visibility: 0.99 };
+  points[POSE.rightShoulder] = { x: 0.4, y: 0.35, visibility: 0.99 };
+  points[POSE.leftHip] = { x: 0.57, y: 0.65, visibility: 0.9 };
+  points[POSE.rightHip] = { x: 0.43, y: 0.65, visibility: 0.9 };
+  points[POSE.leftKnee] = { x: 0.57, y: 0.85, visibility: 0.8 };
+  points[POSE.rightKnee] = { x: 0.43, y: 0.85, visibility: 0.8 };
+  return Object.assign(points, overrides);
+}
+
+describe('checkFraming', () => {
+  it('is ready when shoulders and hips are in view', () => {
+    expect(checkFraming(person(), 'shoulders', 16 / 9)).toBe('ready');
+  });
+
+  it('asks for a person when nobody is found', () => {
+    expect(checkFraming([], 'shoulders', 1)).toBe('no-person');
+  });
+
+  it('asks the user to step back when the hips are out of frame', () => {
+    const close = person({ [POSE.leftHip]: { x: 0.6, y: 1.1, visibility: 0.2 } });
+    expect(checkFraming(close, 'shoulders', 16 / 9)).toBe('step-back');
+  });
+
+  it('asks the user to come closer when they are tiny', () => {
+    const far = person({
+      [POSE.leftShoulder]: { x: 0.52, y: 0.35, visibility: 0.99 },
+      [POSE.rightShoulder]: { x: 0.48, y: 0.35, visibility: 0.99 },
+    });
+    expect(checkFraming(far, 'shoulders', 16 / 9)).toBe('come-closer');
+  });
+
+  it('needs the knees for trousers', () => {
+    const noKnees = person({ [POSE.leftKnee]: { x: 0.57, y: 1.05, visibility: 0.1 } });
+    expect(checkFraming(noKnees, 'hips', 16 / 9)).toBe('show-legs');
+    expect(checkFraming(noKnees, 'shoulders', 16 / 9)).toBe('ready');
+  });
+
+  it('asks the user to move to the middle', () => {
+    const shift = (point: Landmark) => ({ ...point, x: point.x - 0.35 });
+    const points = person().map(shift);
+    expect(checkFraming(points, 'shoulders', 16 / 9)).toBe('move-centre');
+  });
+});
+
+describe('garmentMatrix', () => {
+  const upright = {
+    left: { x: 400, y: 300 },
+    right: { x: 600, y: 300 },
+    lowerLeft: { x: 420, y: 590 },
+    lowerRight: { x: 580, y: 590 },
+  };
+
+  it('puts the shoulder line just above the shoulders, centred', () => {
+    const matrix = garmentMatrix(upright, shirt);
+    const anchor = applyMatrix(matrix, { x: shirt.centerX, y: shirt.anchorY });
+    expect(anchor.x).toBeCloseTo(500);
+    expect(anchor.y).toBeCloseTo(300 - BODY.shoulders.lift * 200);
+  });
+
+  it('makes the garment body as wide as the shoulders plus ease', () => {
+    const matrix = garmentMatrix(upright, shirt);
+    const leftEdge = applyMatrix(matrix, {
+      x: shirt.centerX - shirt.bodyWidth / 2,
+      y: shirt.anchorY,
+    });
+    const rightEdge = applyMatrix(matrix, {
+      x: shirt.centerX + shirt.bodyWidth / 2,
+      y: shirt.anchorY,
+    });
+    expect(rightEdge.x - leftEdge.x).toBeCloseTo(200 * BODY.shoulders.ease);
+  });
+
+  it('tilts with the body', () => {
+    const leaning = { ...upright, right: { x: 600, y: 400 } }; // right shoulder dropped
+    const matrix = garmentMatrix(leaning, shirt);
+    const leftEdge = applyMatrix(matrix, { x: 0, y: shirt.anchorY });
+    const rightEdge = applyMatrix(matrix, { x: shirt.width, y: shirt.anchorY });
+    expect(rightEdge.y).toBeGreaterThan(leftEdge.y);
+  });
+
+  it('keeps the length when the user turns sideways', () => {
+    const turned = { ...upright, left: { x: 460, y: 300 }, right: { x: 540, y: 300 } };
+    const front = garmentMatrix(upright, shirt);
+    const side = garmentMatrix(turned, shirt);
+    expect(side[3]).toBeCloseTo(front[3]); // same vertical scale
+    expect(side[0]).toBeLessThan(front[0]); // narrower
+  });
+
+  it('scales with the Fit control', () => {
+    expect(garmentMatrix(upright, shirt, 1.1)[0]).toBeCloseTo(
+      garmentMatrix(upright, shirt)[0] * 1.1,
+    );
+  });
+});
+
+describe('smoothLandmarks', () => {
+  it('moves part of the way for small changes', () => {
+    const [point] = smoothLandmarks([{ x: 0.5, y: 0.5 }], [{ x: 0.52, y: 0.5 }]);
+    expect(point.x).toBeCloseTo(0.51);
+  });
+
+  it('jumps straight to the new place after a big move', () => {
+    const [point] = smoothLandmarks([{ x: 0.2, y: 0.5 }], [{ x: 0.6, y: 0.5 }]);
+    expect(point.x).toBe(0.6);
+  });
+});

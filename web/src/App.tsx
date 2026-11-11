@@ -1,4 +1,5 @@
 import { AnimatePresence } from 'motion/react';
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { ProtectedRoute, PublicOnlyRoute } from './components/routing/ProtectedRoute';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -35,6 +36,12 @@ import { TailorReviewsPage } from './pages/tailor-panel/TailorReviewsPage';
 import { TailorShopPage } from './pages/tailor-panel/TailorShopPage';
 import { TailorPage } from './pages/tailors/TailorPage';
 import { TailorsPage } from './pages/tailors/TailorsPage';
+import { FullPageLoader } from './components/ui/FullPageLoader';
+
+// Live try-on brings the body-tracking library, so it loads only when someone opens it.
+const LiveTryOnPage = lazy(() =>
+  import('./pages/live/LiveTryOnPage').then((module) => ({ default: module.LiveTryOnPage })),
+);
 
 /**
  * Route tree. Keying by the first path segment lets <AnimatePresence> animate between
@@ -57,6 +64,14 @@ export function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="stylist" element={<Navigate to="/app/stylist" replace />} />
+        <Route
+          path="live/:id"
+          element={
+            <Suspense fallback={<FullPageLoader />}>
+              <LiveTryOnPage />
+            </Suspense>
+          }
+        />
 
         <Route element={<PublicOnlyRoute />}>
           <Route path="login" element={<LoginPage />} />

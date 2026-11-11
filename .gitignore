@@ -27,3 +27,6 @@ __pycache__/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# MediaPipe runtime, copied from node_modules before dev/build (web/scripts/copy-mediapipe.mjs)
+web/public/mediapipe/

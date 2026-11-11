@@ -35,6 +35,24 @@ export interface ProductVariant {
   stockQty: number | null;
 }
 
+/**
+ * Where a garment's shoulders (or waistband) are in its live try-on cut-out, in the cut-out's
+ * pixels. Made by the API's cut-out job; see api/src/modules/catalogue/cutouts.
+ */
+export interface GarmentFit {
+  anchor: 'shoulders' | 'hips';
+  width: number;
+  height: number;
+  centerX: number;
+  anchorY: number;
+  bodyWidth: number;
+}
+
+export interface LiveTryOn {
+  cutoutUrl: string;
+  fit: GarmentFit;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -53,6 +71,8 @@ export interface Product {
   productUrl?: string | null;
   isActive?: boolean;
   variants?: ProductVariant[];
+  /** Product page only: set when the piece can be tried on live with the camera. */
+  liveTryOn?: LiveTryOn | null;
 }
 
 export interface Paginated<T> {
@@ -86,6 +106,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   size?: string;
+  liveTryOn?: boolean;
   sort?: 'featured' | 'newest' | 'price_asc' | 'price_desc';
   page?: number;
   limit?: number;

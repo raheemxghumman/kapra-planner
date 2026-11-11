@@ -4,7 +4,7 @@ import type { ProductFilters } from '../types/catalogue';
 
 const LIST_KEYS = ['brand', 'category', 'colour', 'occasion'] as const;
 const NUMBER_KEYS = ['minPrice', 'maxPrice'] as const;
-const TEXT_KEYS = ['q', 'gender', 'style', 'size', 'sort'] as const;
+const TEXT_KEYS = ['q', 'gender', 'style', 'size', 'sort', 'liveTryOn'] as const;
 
 /**
  * Catalogue filters stored in the URL (?category=kurta,dress&style=eastern).

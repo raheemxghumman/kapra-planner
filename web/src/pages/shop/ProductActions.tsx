@@ -1,4 +1,4 @@
-import { ExternalLink, Heart, ScanFace, ShoppingBag, Sparkles } from 'lucide-react';
+import { Camera, ExternalLink, Heart, ScanFace, ShoppingBag, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { Button } from '../../components/ui/Button';
@@ -61,6 +61,12 @@ export function ProductActions({ product, variantId }: { product: Product; varia
             Buy at {product.brand.name} <ExternalLink size={15} />
           </a>
         )
+      )}
+      {product.liveTryOn && (
+        // Live try-on runs on the visitor's own device, so it needs no account.
+        <Button variant="soft" size="lg" className="w-full" onClick={() => navigate(`/live/${product.id}`)}>
+          <Camera size={16} /> Try on live with your camera
+        </Button>
       )}
       <div className="grid grid-cols-3 gap-2">
         {WEARABLE.includes(product.category) && (

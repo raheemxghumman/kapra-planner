@@ -66,6 +66,12 @@ export function FilterPanel({ facets, api }: { facets?: Facets; api: FilterApi }
         </div>
       </Group>
 
+      <Group title="Try on">
+        <Chip active={Boolean(filters.liveTryOn)} onClick={() => setFilter('liveTryOn', filters.liveTryOn ? undefined : true)}>
+          Live with your camera
+        </Chip>
+      </Group>
+
       <Group title="Category">
         <div className="flex flex-wrap gap-2">
           {facets?.categories.map((item) => (
