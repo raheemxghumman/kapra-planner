@@ -1,4 +1,4 @@
-import { Camera, Minus, Plus, ScanFace, Sparkles, SwitchCamera, X } from 'lucide-react';
+import { Camera, Cpu, Minus, Plus, ScanFace, Sparkles, SwitchCamera, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -8,10 +8,12 @@ import {
   FRAMING_HINTS,
   POSE,
   smoothLandmarks,
+  upperBodyCrop,
   type BodyPoints,
   type Framing,
   type Landmark,
 } from '../../components/live-tryon/fit';
+import { AiTryOnStream, type AiStatus } from '../../components/live-tryon/ai-stream';
 import { RealisticTryOn } from '../../components/live-tryon/RealisticTryOn';
 import { LiveRenderer } from '../../components/live-tryon/renderer';
 import { useCamera } from '../../components/live-tryon/useCamera';
@@ -52,6 +54,11 @@ export function LiveTryOnPage() {
   const [framing, setFraming] = useState<Framing>('no-person');
   const [locked, setLocked] = useState(false);
   const [size, setSize] = useState(1);
+  // "AI live": DM-VTON on a GPU server draws the garment onto the body (realtime-tryon/).
+  const [aiMode, setAiMode] = useState(false);
+  const [aiStatus, setAiStatus] = useState<AiStatus>('connecting');
+  const [aiFps, setAiFps] = useState(0);
+  const aiRef = useRef<AiTryOnStream | null>(null);
 
   // The drawing loop runs 30-60 times a second, so it reads these refs instead of React state.
   const garmentRef = useRef<HTMLImageElement | null>(null);
@@ -60,6 +67,19 @@ export function LiveTryOnPage() {
   const sizeRef = useRef(1);
   const landmarksRef = useRef<Landmark[] | null>(null);
   const mirroredRef = useRef(true);
+
+  // Open the AI stream while AI live is on; tell it when the garment changes.
+  useEffect(() => {
+    if (!aiMode || !live) return;
+    if (aiRef.current) aiRef.current.setGarment(live.cutoutUrl);
+    else aiRef.current = new AiTryOnStream(live.cutoutUrl, setAiStatus);
+  }, [aiMode, live]);
+  useEffect(() => {
+    if (aiMode) return;
+    aiRef.current?.close();
+    aiRef.current = null;
+  }, [aiMode]);
+  useEffect(() => () => aiRef.current?.close(), []);
   useEffect(() => {
     sizeRef.current = size;
   }, [size]);
@@ -123,6 +143,7 @@ export function LiveTryOnPage() {
     let lostSince: number | null = null;
     let isLocked = false;
     let lastFraming: Framing | null = null;
+    let lastAiFps = 0;
 
     const draw = () => {
       frame = requestAnimationFrame(draw);
@@ -169,6 +190,13 @@ export function LiveTryOnPage() {
         garment?.complete &&
         garment.naturalWidth > 0 &&
         next !== 'no-person';
+      // AI live: send the upper body to the GPU server; draw its latest picture when there is one.
+      const ai = aiRef.current;
+      if (ai && showGarment) {
+        const crop = upperBodyCrop(landmarks!, width, height);
+        if (crop) ai.send(video, crop, renderer.personMask());
+        if (Math.round(ai.fps) !== lastAiFps) setAiFps((lastAiFps = Math.round(ai.fps)));
+      }
       renderer.draw(
         context,
         video,
@@ -182,6 +210,7 @@ export function LiveTryOnPage() {
               mirrored: mirroredRef.current,
             }
           : null,
+        ai?.latest ?? null,
       );
     };
     frame = requestAnimationFrame(draw);
@@ -306,6 +335,18 @@ export function LiveTryOnPage() {
           )}
           <button
             type="button"
+            onClick={() => setAiMode((on) => !on)}
+            aria-pressed={aiMode}
+            className={cn(
+              'flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold backdrop-blur',
+              aiMode ? 'bg-blush text-ink' : 'bg-paper/15 hover:bg-paper/25',
+            )}
+            title="Draw the garment onto your body with AI on a GPU (runs on this computer)"
+          >
+            <Cpu size={16} /> AI live
+          </button>
+          <button
+            type="button"
             onClick={() => setFacing(mirrored ? 'environment' : 'user')}
             className="grid size-10 shrink-0 place-items-center rounded-full bg-paper/15 backdrop-blur hover:bg-paper/25"
             aria-label="Switch camera"
@@ -331,6 +372,19 @@ export function LiveTryOnPage() {
             </motion.p>
           )}
         </AnimatePresence>
+
+        {aiMode && !status && (
+          <p
+            className="absolute top-36 left-1/2 -translate-x-1/2 rounded-full bg-ink/70 px-3 py-1.5 text-xs whitespace-nowrap backdrop-blur"
+            role="note"
+          >
+            {aiStatus === 'ready'
+              ? `AI try-on on your GPU · ${aiFps} fps`
+              : aiStatus === 'connecting'
+                ? 'Connecting to the AI try-on server…'
+                : 'AI try-on server is not running on this computer (see realtime-tryon/README)'}
+          </p>
+        )}
 
         {(status || (product.data && !live) || product.error) && (
           <div className="absolute inset-0 grid place-items-center bg-ink/80 p-6 text-center">

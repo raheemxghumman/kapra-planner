@@ -14,6 +14,8 @@ import {
   SEGMENT,
   smoothLandmarks,
   type Landmark,
+  upperBodyCrop,
+  AI_ASPECT,
 } from './fit';
 
 const shirt: GarmentFit = {
@@ -224,5 +226,28 @@ describe('mirrorGarment', () => {
     const left = applyMatrix(matrix, { x: 100, y: 100 });
     const mirroredRight = applyMatrix(mirrorGarment(matrix, 150), { x: 200, y: 100 });
     expect(mirroredRight.x).toBeCloseTo(left.x);
+  });
+});
+
+describe('upperBodyCrop', () => {
+  it('frames the upper body at 3:4 inside the picture', () => {
+    const points = person({
+      [POSE.leftEye]: { x: 0.52, y: 0.2, visibility: 0.99 },
+      [POSE.rightEye]: { x: 0.48, y: 0.2, visibility: 0.99 },
+    });
+    const crop = upperBodyCrop(points, 1280, 720)!;
+    expect(crop.width / crop.height).toBeCloseTo(AI_ASPECT, 1);
+    expect(crop.x).toBeGreaterThanOrEqual(0);
+    expect(crop.y).toBeGreaterThanOrEqual(0);
+    expect(crop.x + crop.width).toBeLessThanOrEqual(1280);
+    expect(crop.y + crop.height).toBeLessThanOrEqual(720);
+    // The shoulders are inside the crop.
+    expect(crop.x).toBeLessThan(0.4 * 1280);
+    expect(crop.x + crop.width).toBeGreaterThan(0.6 * 1280);
+  });
+
+  it('needs the eyes and hips', () => {
+    const noHips = person({ [POSE.leftHip]: { x: 0.57, y: 0.65, visibility: 0.1 } });
+    expect(upperBodyCrop(noHips, 1280, 720)).toBeNull();
   });
 });

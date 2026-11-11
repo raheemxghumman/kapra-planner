@@ -22,6 +22,8 @@ export interface Point {
 /** Indices of the MediaPipe Pose points we use ("left" is the person's own left). */
 export const POSE = {
   nose: 0,
+  leftEye: 2,
+  rightEye: 5,
   leftShoulder: 11,
   rightShoulder: 12,
   leftHip: 23,
@@ -295,6 +297,18 @@ export function occluderMask(
   return out;
 }
 
+/** RGBA alpha mask of the person (every class except background), for the AI try-on. */
+export function personMask(
+  categories: Uint8Array,
+  width: number,
+  height: number,
+  out = new Uint8ClampedArray(width * height * 4),
+): Uint8ClampedArray {
+  for (let i = 0; i < width * height; i++)
+    out[i * 4 + 3] = categories[i] === SEGMENT.background ? 0 : 255;
+  return out;
+}
+
 /** Average brightness (0 to 1) of RGBA pixels, weighted like the human eye sees colour. */
 export function averageLuma(rgba: Uint8ClampedArray): number {
   let sum = 0;
@@ -309,3 +323,60 @@ export function averageLuma(rgba: Uint8ClampedArray): number {
  */
 export const garmentBrightness = (sceneLuma: number) =>
   Math.min(1, Math.max(0.55, (sceneLuma / 0.5) ** 0.7));
+
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Width : height of the pictures DM-VTON works on (192 x 256). */
+export const AI_ASPECT = 192 / 256;
+
+/**
+ * The part of the camera picture to send to the AI try-on model: the upper body framed like its
+ * training photos (eyes to hips, with room for the arms), widened or heightened to 3:4 and kept
+ * inside the picture. Returns null when the eyes or hips are not visible.
+ */
+export function upperBodyCrop(landmarks: Landmark[], width: number, height: number): Rect | null {
+  const points = [POSE.leftEye, POSE.rightEye, POSE.leftHip, POSE.rightHip].map(
+    (index) => landmarks[index],
+  );
+  if (points.some((point) => !point || (point.visibility ?? 1) < 0.5)) return null;
+
+  const xs = points.map((point) => point.x * width);
+  const ys = points.map((point) => point.y * height);
+  let left = Math.min(...xs);
+  let right = Math.max(...xs);
+  let top = Math.min(...ys);
+  let bottom = Math.max(...ys);
+  // Room above the eyes for the head, below the hips for the hem, and either side for the arms.
+  const boxHeight = bottom - top;
+  const boxWidth = right - left;
+  top -= boxHeight * 0.25;
+  bottom += boxHeight * 0.2;
+  left -= boxWidth * 1.0;
+  right += boxWidth * 1.0;
+
+  // Grow the short side to reach 3:4, keeping the centre.
+  let cropWidth = right - left;
+  let cropHeight = bottom - top;
+  if (cropWidth / cropHeight < AI_ASPECT) cropWidth = cropHeight * AI_ASPECT;
+  else cropHeight = cropWidth / AI_ASPECT;
+  // Never larger than the picture.
+  const shrink = Math.min(1, width / cropWidth, height / cropHeight);
+  cropWidth *= shrink;
+  cropHeight *= shrink;
+
+  const centreX = (left + right) / 2;
+  const centreY = (top + bottom) / 2;
+  const x = Math.min(Math.max(0, centreX - cropWidth / 2), width - cropWidth);
+  const y = Math.min(Math.max(0, centreY - cropHeight / 2), height - cropHeight);
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(cropWidth),
+    height: Math.round(cropHeight),
+  };
+}
