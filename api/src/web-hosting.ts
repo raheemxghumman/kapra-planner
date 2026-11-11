@@ -50,7 +50,8 @@ export const CONTENT_SECURITY_POLICY = {
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-    connectSrc: ["'self'", 'https:', 'wss:'],
+    // ws://localhost: the optional real-time AI try-on server on the shopper's own computer.
+    connectSrc: ["'self'", 'https:', 'wss:', 'ws://localhost:*'],
     workerSrc: ["'self'", 'blob:'],
     frameAncestors: ["'none'"],
     objectSrc: ["'none'"],

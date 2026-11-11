@@ -30,3 +30,8 @@ __pycache__/
 
 # MediaPipe runtime, copied from node_modules before dev/build (web/scripts/copy-mediapipe.mjs)
 web/public/mediapipe/
+
+# Real-time try-on server: DM-VTON's code and weights are downloaded by setup.py
+realtime-tryon/vendor/
+realtime-tryon/checkpoints/
+__pycache__/

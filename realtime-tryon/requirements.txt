@@ -1,0 +1,8 @@
+# Install PyTorch for your GPU first, e.g. (NVIDIA, CUDA 12.4):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+torch>=2.5
+torchvision>=0.20
+numpy>=2.0
+pillow>=11.0
+websockets>=14.0
+gdown>=5.2
