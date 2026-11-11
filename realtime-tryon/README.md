@@ -7,9 +7,9 @@ It runs **[DM-VTON](https://github.com/KiseKloset/DM-VTON)** (Distilled Mobile R
 ```mermaid
 flowchart LR
   CAM["Camera (browser)"] --> CROP["Upper-body crop 192x256,<br/>background painted white"]
-  CROP -->|"JPEG over WebSocket"| SRV["server.py<br/>DM-VTON on the GPU"]
+  CROP -->|"raw RGB over WebSocket"| SRV["server.py<br/>DM-VTON on the GPU"]
   CUT["Garment cut-out<br/>(Kapra cut-out job)"] --> SRV
-  SRV -->|"JPEG"| PASTE["Pasted back onto the person,<br/>face and hands on top"]
+  SRV -->|"raw RGB"| PASTE["Pasted back onto the person,<br/>face and hands on top"]
 ```
 
 ## Setup (once)
@@ -36,12 +36,12 @@ Open a live try-on page and switch on **AI live**. The page connects to `ws://lo
 
 | File | Job |
 |---|---|
-| `server.py` | WebSocket server. A text message picks the garment; each binary message is a 192x256 JPEG of the person, answered with the try-on JPEG. One frame is in flight at a time, so a slower GPU lowers the frame rate instead of adding delay. Only Kapra's own origins may connect. |
+| `server.py` | WebSocket server. A text message picks the garment; each binary message is the person as raw 192x256 RGB pixels, answered with the try-on pixels (raw, not JPEG: the browser's JPEG encoder was much slower than the AI). One frame is in flight at a time, so a slower GPU lowers the frame rate instead of adding delay. Only Kapra's own origins may connect. |
 | `tryon/model.py` | Loads DM-VTON: a **warping module** predicts how to bend the flat garment to the body (an appearance flow), then a **MobileNetV2 U-Net generator** blends it into the person and repaints arms and neck. |
 | `tryon/correlation.py` | The cost volume used by the warping module, in plain PyTorch. DM-VTON ships it as a CUDA kernel run through `cupy`, which needs the whole CUDA toolkit. |
 | `tryon/garment.py` | Places a Kapra cut-out like a VITON product photo (centred on white, 192x256) and makes its edge mask from the transparency. |
 
-The browser does the person-side work it already does for live AR: MediaPipe Pose picks the upper-body crop (eyes to hips, 3:4), and the multiclass segmenter paints the background white, because the model learned from studio photos.
+The browser does the person-side work it already does for live AR: MediaPipe Pose picks the upper-body crop from the shoulders (3:4, framed like the training photos), and the multiclass segmenter paints the background white, because the model learned from studio photos.
 
 ## Limits
 

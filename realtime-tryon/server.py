@@ -2,8 +2,9 @@
 with the garment drawn onto the person by DM-VTON, running on this computer's GPU.
 
 Protocol (one WebSocket per shopper):
-  text   {"garment": "<cut-out URL>"}   -> text {"ready": true} once the garment is prepared
-  binary JPEG, 192x256 person crop       -> binary JPEG, 192x256 try-on result
+  text   {"garment": "<cut-out URL>"}        -> text {"ready": true} once the garment is prepared
+  binary raw RGB, 192x256 person crop (147 KB) -> binary raw RGB, 192x256 try-on result
+Raw pixels, not JPEG: the browser's JPEG encoder was far slower than the AI itself.
 The website sends the next frame only after receiving a result, so a slow GPU lowers the frame
 rate instead of building up a queue.
 
@@ -11,7 +12,6 @@ Run:  .venv\\Scripts\\python server.py      (listens on ws://localhost:8765)
 """
 
 import asyncio
-import io
 import json
 import logging
 import os
@@ -20,7 +20,6 @@ import time
 import numpy as np
 import torch
 import websockets
-from PIL import Image
 
 from tryon import garment as garments
 from tryon.model import HEIGHT, WIDTH, TryOnModel
@@ -39,17 +38,7 @@ model = TryOnModel()
 log.info("DM-VTON loaded on %s", model.device)
 
 
-def decode_jpeg(data: bytes) -> np.ndarray:
-    image = Image.open(io.BytesIO(data)).convert("RGB")
-    if image.size != (WIDTH, HEIGHT):
-        image = image.resize((WIDTH, HEIGHT), Image.BILINEAR)
-    return np.asarray(image)
-
-
-def encode_jpeg(rgb: np.ndarray) -> bytes:
-    buffer = io.BytesIO()
-    Image.fromarray(rgb).save(buffer, format="JPEG", quality=88)
-    return buffer.getvalue()
+FRAME_BYTES = HEIGHT * WIDTH * 3
 
 
 async def session(websocket) -> None:
@@ -70,11 +59,11 @@ async def session(websocket) -> None:
                 await websocket.send(json.dumps({"ready": False, "error": "Could not load this garment"}))
             continue
 
-        if garment_tensor is None:
+        if garment_tensor is None or len(message) != FRAME_BYTES:
             continue
-        person = TryOnModel.to_tensor(decode_jpeg(message))
+        person = TryOnModel.to_tensor(np.frombuffer(message, dtype=np.uint8).reshape(HEIGHT, WIDTH, 3).copy())
         result = await asyncio.to_thread(model, person, garment_tensor, edge_tensor)
-        await websocket.send(encode_jpeg(result))
+        await websocket.send(result.tobytes())
 
         frames += 1
         if frames % 100 == 0:
@@ -82,7 +71,7 @@ async def session(websocket) -> None:
 
 
 async def main() -> None:
-    async with websockets.serve(session, "localhost", PORT, origins=ALLOWED_ORIGINS, max_size=2**20):
+    async with websockets.serve(session, "localhost", PORT, origins=ALLOWED_ORIGINS, max_size=FRAME_BYTES + 1024):
         log.info("Listening on ws://localhost:%d", PORT)
         await asyncio.Future()  # run until stopped
 

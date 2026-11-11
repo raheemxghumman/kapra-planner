@@ -210,7 +210,7 @@ export function LiveTryOnPage() {
               mirrored: mirroredRef.current,
             }
           : null,
-        ai?.latest ?? null,
+        ai?.fresh() ?? null, // a stale AI picture would lag behind; the overlay is shown instead
       );
     };
     frame = requestAnimationFrame(draw);

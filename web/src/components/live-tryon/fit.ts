@@ -22,8 +22,6 @@ export interface Point {
 /** Indices of the MediaPipe Pose points we use ("left" is the person's own left). */
 export const POSE = {
   nose: 0,
-  leftEye: 2,
-  rightEye: 5,
   leftShoulder: 11,
   rightShoulder: 12,
   leftHip: 23,
@@ -335,44 +333,35 @@ export interface Rect {
 export const AI_ASPECT = 192 / 256;
 
 /**
- * The part of the camera picture to send to the AI try-on model: the upper body framed like its
- * training photos (eyes to hips, with room for the arms), widened or heightened to 3:4 and kept
- * inside the picture. Returns null when the eyes or hips are not visible.
+ * Where the shoulders sit in DM-VTON's training photos (VITON): about 45% of the picture's width
+ * apart, about 27% of its height from the top.
+ */
+const AI_SHOULDER_WIDTH = 0.45;
+const AI_SHOULDER_ROW = 0.27;
+
+/**
+ * The part of the camera picture to send to the AI try-on model, framed like its training photos
+ * from the shoulders alone (always visible once the user is locked on, and steadier than eyes or
+ * hips): 3:4, shoulders 45% of the width apart and 27% from the top, kept inside the picture.
+ * Returns null when the shoulders are not visible.
  */
 export function upperBodyCrop(landmarks: Landmark[], width: number, height: number): Rect | null {
-  const points = [POSE.leftEye, POSE.rightEye, POSE.leftHip, POSE.rightHip].map(
-    (index) => landmarks[index],
-  );
-  if (points.some((point) => !point || (point.visibility ?? 1) < 0.5)) return null;
+  const left = landmarks[POSE.leftShoulder];
+  const right = landmarks[POSE.rightShoulder];
+  if (!left || !right || (left.visibility ?? 1) < 0.5 || (right.visibility ?? 1) < 0.5) return null;
 
-  const xs = points.map((point) => point.x * width);
-  const ys = points.map((point) => point.y * height);
-  let left = Math.min(...xs);
-  let right = Math.max(...xs);
-  let top = Math.min(...ys);
-  let bottom = Math.max(...ys);
-  // Room above the eyes for the head, below the hips for the hem, and either side for the arms.
-  const boxHeight = bottom - top;
-  const boxWidth = right - left;
-  top -= boxHeight * 0.25;
-  bottom += boxHeight * 0.2;
-  left -= boxWidth * 1.0;
-  right += boxWidth * 1.0;
-
-  // Grow the short side to reach 3:4, keeping the centre.
-  let cropWidth = right - left;
-  let cropHeight = bottom - top;
-  if (cropWidth / cropHeight < AI_ASPECT) cropWidth = cropHeight * AI_ASPECT;
-  else cropHeight = cropWidth / AI_ASPECT;
+  const shoulderWidth = Math.hypot((left.x - right.x) * width, (left.y - right.y) * height);
+  let cropWidth = shoulderWidth / AI_SHOULDER_WIDTH;
+  let cropHeight = cropWidth / AI_ASPECT;
   // Never larger than the picture.
   const shrink = Math.min(1, width / cropWidth, height / cropHeight);
   cropWidth *= shrink;
   cropHeight *= shrink;
 
-  const centreX = (left + right) / 2;
-  const centreY = (top + bottom) / 2;
-  const x = Math.min(Math.max(0, centreX - cropWidth / 2), width - cropWidth);
-  const y = Math.min(Math.max(0, centreY - cropHeight / 2), height - cropHeight);
+  const middleX = ((left.x + right.x) / 2) * width;
+  const middleY = ((left.y + right.y) / 2) * height;
+  const x = Math.min(Math.max(0, middleX - cropWidth / 2), width - cropWidth);
+  const y = Math.min(Math.max(0, middleY - AI_SHOULDER_ROW * cropHeight), height - cropHeight);
   return {
     x: Math.round(x),
     y: Math.round(y),

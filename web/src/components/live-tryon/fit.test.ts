@@ -230,24 +230,26 @@ describe('mirrorGarment', () => {
 });
 
 describe('upperBodyCrop', () => {
-  it('frames the upper body at 3:4 inside the picture', () => {
-    const points = person({
-      [POSE.leftEye]: { x: 0.52, y: 0.2, visibility: 0.99 },
-      [POSE.rightEye]: { x: 0.48, y: 0.2, visibility: 0.99 },
-    });
-    const crop = upperBodyCrop(points, 1280, 720)!;
+  it('frames the upper body at 3:4 like the training photos', () => {
+    // A tall picture, so the crop is not shrunk to fit.
+    const crop = upperBodyCrop(person(), 1280, 1600)!;
     expect(crop.width / crop.height).toBeCloseTo(AI_ASPECT, 1);
+    // Shoulders (0.4..0.6 of 1280 = 256 px apart) take 45% of the crop's width...
+    expect(crop.width).toBeCloseTo(256 / 0.45, -1);
+    // ...and sit 27% from its top (y 0.35 of 1600 = 560 px).
+    expect((560 - crop.y) / crop.height).toBeCloseTo(0.27, 1);
+  });
+
+  it('stays inside the picture', () => {
+    const crop = upperBodyCrop(person(), 1280, 720)!;
     expect(crop.x).toBeGreaterThanOrEqual(0);
     expect(crop.y).toBeGreaterThanOrEqual(0);
     expect(crop.x + crop.width).toBeLessThanOrEqual(1280);
     expect(crop.y + crop.height).toBeLessThanOrEqual(720);
-    // The shoulders are inside the crop.
-    expect(crop.x).toBeLessThan(0.4 * 1280);
-    expect(crop.x + crop.width).toBeGreaterThan(0.6 * 1280);
   });
 
-  it('needs the eyes and hips', () => {
-    const noHips = person({ [POSE.leftHip]: { x: 0.57, y: 0.65, visibility: 0.1 } });
-    expect(upperBodyCrop(noHips, 1280, 720)).toBeNull();
+  it('needs both shoulders', () => {
+    const hidden = person({ [POSE.leftShoulder]: { x: 0.6, y: 0.35, visibility: 0.1 } });
+    expect(upperBodyCrop(hidden, 1280, 720)).toBeNull();
   });
 });
