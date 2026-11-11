@@ -79,7 +79,8 @@ export class LiveRenderer {
     const user = bodyPoints(landmarks, fit.anchor, width, height);
     // Joint to joint when the model's joints are known; otherwise the shoulder line (flat-lays).
     const matrix = modelBody ? bodyMatrix(modelBody, user, size) : garmentMatrix(user, fit, size);
-    context.setTransform(...(mirrored ? mirrorGarment(matrix, fit.width) : matrix));
+    const axis = modelBody ? (modelBody.left.x + modelBody.right.x) / 2 : fit.centerX;
+    context.setTransform(...(mirrored ? mirrorGarment(matrix, axis) : matrix));
     context.filter = `brightness(${this.brightness})`;
     context.drawImage(garment, 0, 0, fit.width, fit.height);
     context.filter = 'none';

@@ -194,12 +194,14 @@ export function bodyMatrix(model: BodyPoints, user: BodyPoints, sizeScale = 1): 
 }
 
 /**
- * Mirrors the garment left-to-right inside its own image. The front-camera view is shown
- * mirrored (like a mirror); drawing the garment pre-mirrored keeps its printed text readable.
+ * Mirrors the garment left-to-right about its own centre line (x = axis, in cut-out pixels).
+ * The front-camera view is shown mirrored (like a mirror); drawing the garment pre-mirrored
+ * keeps its printed text readable. The axis must be the line the garment is pinned by (its
+ * centre, or the middle of the model's shoulders), or the mirrored garment would shift sideways.
  */
-export function mirrorGarment([a, b, c, d, e, f]: Matrix, garmentWidth: number): Matrix {
-  // matrix × flip, where flip maps x -> garmentWidth - x.
-  return [-a, -b, c, d, a * garmentWidth + e, b * garmentWidth + f];
+export function mirrorGarment([a, b, c, d, e, f]: Matrix, axis: number): Matrix {
+  // matrix × flip, where flip maps x -> 2·axis - x.
+  return [-a, -b, c, d, 2 * axis * a + e, 2 * axis * b + f];
 }
 
 /** Applies a canvas transform to a point (used by the tests and the debug view). */

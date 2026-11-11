@@ -203,20 +203,26 @@ describe('bodyMatrix', () => {
 });
 
 describe('mirrorGarment', () => {
-  it('swaps the garment left and right edges in place', () => {
-    const matrix = garmentMatrix(
-      {
-        left: { x: 400, y: 300 },
-        right: { x: 600, y: 300 },
-        lowerLeft: { x: 420, y: 660 },
-        lowerRight: { x: 580, y: 660 },
-      },
-      shirt,
-    );
-    const mirrored = mirrorGarment(matrix, shirt.width);
-    const leftEdge = applyMatrix(matrix, { x: 0, y: 100 });
-    const mirroredRightEdge = applyMatrix(mirrored, { x: shirt.width, y: 100 });
-    expect(mirroredRightEdge.x).toBeCloseTo(leftEdge.x);
-    expect(mirroredRightEdge.y).toBeCloseTo(leftEdge.y);
+  const matrix = garmentMatrix(
+    {
+      left: { x: 400, y: 300 },
+      right: { x: 600, y: 300 },
+      lowerLeft: { x: 420, y: 660 },
+      lowerRight: { x: 580, y: 660 },
+    },
+    { ...shirt, centerX: 150 }, // an off-centre garment: centre line at x 150 of 400
+  );
+
+  it('keeps the centre line in place', () => {
+    const before = applyMatrix(matrix, { x: 150, y: 100 });
+    const after = applyMatrix(mirrorGarment(matrix, 150), { x: 150, y: 100 });
+    expect(after.x).toBeCloseTo(before.x);
+    expect(after.y).toBeCloseTo(before.y);
+  });
+
+  it('swaps the two sides around the centre line', () => {
+    const left = applyMatrix(matrix, { x: 100, y: 100 });
+    const mirroredRight = applyMatrix(mirrorGarment(matrix, 150), { x: 200, y: 100 });
+    expect(mirroredRight.x).toBeCloseTo(left.x);
   });
 });
