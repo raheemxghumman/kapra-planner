@@ -6,7 +6,7 @@ import { callSpaceForImage } from './gradio-space.js';
 import type { TryOnInput, TryOnProvider } from './tryon.types.js';
 
 /**
- * IDM-VTON (yisol/IDM-VTON Space, free ZeroGPU). The main provider: keeps embroidery, prints,
+ * IDM-VTON (yisol/IDM-VTON Space, free ZeroGPU). Second choice, after FASHN: keeps embroidery, prints,
  * colours and the person's face (about 30 s). Limitation: long kurtas come out at top length.
  */
 @Injectable()

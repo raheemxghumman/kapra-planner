@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   classifyPhoto,
+  erode,
   keepMainRegions,
   measureGarment,
   scaleFit,
@@ -30,7 +31,7 @@ describe('measureGarment', () => {
     const result = measureGarment(tShirt(), 'shoulders')!;
     expect(result.problems).toEqual([]);
     expect(result.fit.centerX).toBeCloseTo(60, 0); // 100 in the photo, minus the box's left edge (40)
-    expect(result.fit.anchorY).toBe(10); // the first full-width row (y 40) minus the box top (30)
+    expect(result.fit.anchorY).toBe(10); // the shoulders (y 40), not the collar (y 30), minus the box top
     expect(result.fit.bodyWidth).toBe(61); // body only, sleeves excluded
     expect(result.quality).toBeGreaterThan(0.95);
   });
@@ -75,6 +76,16 @@ describe('measureGarment', () => {
 
   it('returns null for an empty mask', () => {
     expect(measureGarment(maskOf(50, 50, []), 'shoulders')).toBeNull();
+  });
+});
+
+describe('erode', () => {
+  it('trims one pixel from every edge', () => {
+    const square = maskOf(10, 10, [[2, 2, 7, 7]]);
+    const trimmed = erode(square);
+    expect(trimmed.data[2 * 10 + 2]).toBe(0); // old corner is gone
+    expect(trimmed.data[3 * 10 + 3]).toBe(255); // inside stays
+    expect(trimmed.data.filter(Boolean).length).toBe(16); // 6x6 becomes 4x4
   });
 });
 

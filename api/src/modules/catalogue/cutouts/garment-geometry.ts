@@ -9,9 +9,9 @@ import { ProductCategory } from '../catalogue.enums.js';
 export type GarmentAnchor = 'shoulders' | 'hips';
 
 /**
- * How a cut-out sits on a body, in the cut-out image's own pixels. The website pins the
- * anchor line (centerX, anchorY) to the user's shoulders or hips and scales the image so that
- * bodyWidth matches their body.
+ * How a cut-out sits on a body, in the cut-out image's own pixels. Without a model in the product
+ * photo, the website pins the anchor point (centerX, anchorY) to the user's shoulders (or hips)
+ * and scales the image so that bodyWidth matches their body.
  */
 export interface GarmentFit {
   anchor: GarmentAnchor;
@@ -19,10 +19,16 @@ export interface GarmentFit {
   height: number;
   /** Centre line of the garment (the placket or the middle of the waistband). */
   centerX: number;
-  /** Shoulder line for tops, kurtas and dresses; waistband for trousers. */
+  /** Shoulder line for tops and dresses; waistband for trousers. */
   anchorY: number;
   /** Flat width of the garment's body (chest for tops, waist for trousers), sleeves excluded. */
   bodyWidth: number;
+  /**
+   * Where the cut-out lies in its product photo, as shares (0 to 1) of the photo's width and
+   * height. For photos of a model, the website finds the model's shoulders and hips in the photo
+   * and maps them into the cut-out with this, so the garment can be pinned joint to joint.
+   */
+  source?: { x: number; y: number; width: number; height: number };
 }
 
 export interface Mask {
@@ -31,23 +37,44 @@ export interface Mask {
   height: number;
 }
 
-/** What the clothes-segmentation model must find for each kind of product, and where it is pinned. */
+/**
+ * What the clothes-segmentation model must find for each kind of product, and where it is pinned.
+ * Western wear only: the cut-out job skips Eastern styles, because long kurtas and draped
+ * dupattas cannot look right as a flat overlay on a moving body.
+ */
 export const LIVE_TRY_ON: Partial<
   Record<ProductCategory, { labels: string[]; anchor: GarmentAnchor }>
 > = {
   [ProductCategory.Top]: { labels: ['Upper-clothes', 'Dress'], anchor: 'shoulders' },
-  [ProductCategory.Kurta]: { labels: ['Upper-clothes', 'Dress'], anchor: 'shoulders' },
   [ProductCategory.Outerwear]: { labels: ['Upper-clothes', 'Dress'], anchor: 'shoulders' },
   [ProductCategory.Dress]: {
-    labels: ['Upper-clothes', 'Dress', 'Skirt', 'Pants', 'Belt'],
-    anchor: 'shoulders',
-  },
-  [ProductCategory.Suit]: {
-    labels: ['Upper-clothes', 'Dress', 'Skirt', 'Pants', 'Belt'],
+    labels: ['Upper-clothes', 'Dress', 'Skirt', 'Belt'],
     anchor: 'shoulders',
   },
   [ProductCategory.Trousers]: { labels: ['Pants', 'Skirt'], anchor: 'hips' },
 };
+
+/**
+ * Shrinks a mask by `pixels` on every side. Product photos leave a thin halo of background
+ * around the garment's edge; trimming it before softening the edge removes the white fringe.
+ */
+export function erode(mask: Mask, pixels = 1): Mask {
+  let data = mask.data;
+  const { width, height } = mask;
+  for (let pass = 0; pass < pixels; pass++) {
+    const next = new Uint8Array(data.length);
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = y * width + x;
+        // Stays only if it and its four neighbours are all garment.
+        if (data[i] && data[i - 1] && data[i + 1] && data[i - width] && data[i + width])
+          next[i] = 255;
+      }
+    }
+    data = next;
+  }
+  return { data, width, height };
+}
 
 /** Labels of the segmentation model that mean a person is in the photo. */
 const PERSON_LABELS = ['Face', 'Hair', 'Left-arm', 'Right-arm', 'Left-leg', 'Right-leg'];
@@ -154,6 +181,21 @@ export function runWidth({ data, width }: Mask, y: number, x: number): number {
   return right - left + 1;
 }
 
+/** The highest garment row near column x (median over a few columns, to ignore stray pixels). */
+function topEdge(mask: Mask, box: Box, x: number): number {
+  const rows: number[] = [];
+  for (let column = Math.round(x) - 2; column <= Math.round(x) + 2; column++) {
+    if (column < box.left || column > box.right) continue;
+    for (let y = box.top; y <= box.bottom; y++) {
+      if (mask.data[y * mask.width + column] !== 0) {
+        rows.push(y);
+        break;
+      }
+    }
+  }
+  return rows.length ? percentile(rows, 0.5) : box.top;
+}
+
 const percentile = (values: number[], p: number) => {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))] ?? 0;
@@ -221,14 +263,14 @@ export function measureGarment(mask: Mask, anchor: GarmentAnchor): Measurement |
       widths(0.2, 0.6).filter((w) => w > 0),
       0.2,
     );
-    // The shoulder line is where the garment first gets close to its full body width.
-    anchorY = box.top;
-    for (let y = box.top; y <= box.bottom; y++) {
-      if (runWidth(mask, y, centerX) >= bodyWidth * 0.85) {
-        anchorY = y;
-        break;
-      }
-    }
+    // The shoulder line: the garment's top edge where the shoulders are (about 0.4 of the body
+    // width either side of the centre), which is not fooled by collars or hoods. The website
+    // pins it to the user's shoulders when the product photo shows no model.
+    anchorY = Math.round(
+      (topEdge(mask, box, centerX - 0.4 * bodyWidth) +
+        topEdge(mask, box, centerX + 0.4 * bodyWidth)) /
+        2,
+    );
   } else {
     bodyWidth = percentile(widths(0, 0.06), 0.5);
     anchorY = box.top;

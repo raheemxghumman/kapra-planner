@@ -1,5 +1,5 @@
 /**
- * Live try-on cut-out job. For products that have no cut-out yet, it runs the pre-trained
+ * Live try-on cut-out job. For Western products that have no cut-out yet, it runs the pre-trained
  * clothes-segmentation model segformer_b2_clothes (ONNX build, CPU, free) over the product
  * photos, keeps the best transparent cut-out of the garment, uploads it to Cloudinary and saves
  * where the garment's shoulders (or waistband) are, so the website can pin it to the camera.
@@ -38,11 +38,11 @@ export function photoOrder(images: string[]): string[] {
   return [...new Set([...images.slice(0, PHOTOS_PER_PRODUCT), ...images.slice(-1)])];
 }
 
-/** Shopify's image CDN resizes on request; asking for 1024 px saves bandwidth and time. */
+/** Shopify's image CDN resizes on request; 2048 px is enough for a sharp cut-out. */
 function sizedUrl(url: string): string {
   if (!/cdn\.shopify\.com|\/cdn\/shop\//.test(url)) return url;
   const sized = new URL(url);
-  sized.searchParams.set('width', '1024');
+  sized.searchParams.set('width', '2048');
   return sized.toString();
 }
 
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
                   row_number() OVER (PARTITION BY p.brand_id ORDER BY p.created_at DESC) AS turn
            FROM products p JOIN brands b ON b.id = p.brand_id
            WHERE p.is_active AND NOT p.hidden_by_brand AND b.verified
-             AND p.category = ANY($1::product_category[]) AND cardinality(p.images) > 0
+             AND p.style = 'western' AND p.category = ANY($1::product_category[]) AND cardinality(p.images) > 0
              AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.in_stock)
              AND NOT EXISTS (SELECT 1 FROM garment_cutouts g WHERE g.product_id = p.id)
          ) candidates

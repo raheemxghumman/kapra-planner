@@ -5,7 +5,7 @@ import { paginate, type Paginated } from '../../common/dto/pagination.dto.js';
 import { Gender, type Occasion, type ProductCategory, type WearStyle } from './catalogue.enums.js';
 import type { ProductQueryDto } from './dto/product-query.dto.js';
 import type { GarmentFit } from './cutouts/garment-geometry.js';
-import { CutoutStatus, GarmentCutout } from './entities/garment-cutout.entity.js';
+import { CutoutSource, CutoutStatus, GarmentCutout } from './entities/garment-cutout.entity.js';
 import { ProductVariant } from './entities/product-variant.entity.js';
 import { Product } from './entities/product.entity.js';
 
@@ -51,6 +51,8 @@ export interface StylistSearch {
 export interface LiveTryOn {
   cutoutUrl: string;
   fit: GarmentFit;
+  /** The product photo of a model the cut-out came from (null for a flat-lay). */
+  modelPhotoUrl: string | null;
 }
 
 /** The product page: the product plus its live try-on cut-out, when one is ready. */
@@ -270,7 +272,13 @@ export class ProductsService {
     const product = await this.findById(id);
     const cutout = await this.cutouts.findOneBy({ productId: id, status: CutoutStatus.Ready });
     const liveTryOn =
-      cutout?.cutoutUrl && cutout.fit ? { cutoutUrl: cutout.cutoutUrl, fit: cutout.fit } : null;
+      cutout?.cutoutUrl && cutout.fit
+        ? {
+            cutoutUrl: cutout.cutoutUrl,
+            fit: cutout.fit,
+            modelPhotoUrl: cutout.source === CutoutSource.OnModel ? cutout.sourceImage : null,
+          }
+        : null;
     return Object.assign(product, { liveTryOn });
   }
 
