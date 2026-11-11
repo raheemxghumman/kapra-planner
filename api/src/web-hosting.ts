@@ -44,7 +44,9 @@ export const CONTENT_SECURITY_POLICY = {
   directives: {
     defaultSrc: ["'self'"],
     // Alternate Clouds serves the site through Cloudflare, which adds its analytics script.
-    scriptSrc: ["'self'", 'https://static.cloudflareinsights.com'],
+    // 'wasm-unsafe-eval' lets the page compile WebAssembly (MediaPipe body tracking for live
+    // try-on); it does not allow eval() of JavaScript.
+    scriptSrc: ["'self'", "'wasm-unsafe-eval'", 'https://static.cloudflareinsights.com'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],

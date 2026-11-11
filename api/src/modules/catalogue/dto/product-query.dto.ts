@@ -83,6 +83,12 @@ export class ProductQueryDto extends PaginationQueryDto {
   @IsBoolean()
   inStock = true;
 
+  /** Only products that can be tried on live with the camera (a cut-out is ready). */
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  liveTryOn?: boolean;
+
   @IsOptional()
   @IsIn(PRODUCT_SORTS)
   sort: ProductSort = 'featured';

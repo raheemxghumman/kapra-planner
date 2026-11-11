@@ -2,6 +2,7 @@ name: Scheduled jobs
 
 # Background work that must not run inside the free web server:
 # - review sentiment with the pre-trained model, then tailor re-ranking (needs ~1 GB RAM)
+# - live try-on cut-outs with the clothes-segmentation model (new products only)
 # - catalogue sync from the brands' shop feeds (calls the deployed API)
 # Each job skips itself until its secrets are added in Settings -> Secrets -> Actions.
 on:
@@ -40,6 +41,41 @@ jobs:
       - name: Run sentiment job
         if: env.DATABASE_URL != ''
         run: node api/dist/jobs/score-reviews.js
+
+  garment-cutouts:
+    name: Make live try-on cut-outs
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_SSL: 'true'
+      CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+      CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+      CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.DATABASE_URL != '' && env.CLOUDINARY_API_SECRET != ''
+
+      - uses: actions/setup-node@v4
+        if: env.DATABASE_URL != '' && env.CLOUDINARY_API_SECRET != ''
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The ~110 MB segmentation model is downloaded once and reused between runs.
+      - uses: actions/cache@v4
+        if: env.DATABASE_URL != '' && env.CLOUDINARY_API_SECRET != ''
+        with:
+          path: node_modules/@huggingface/transformers/.cache
+          key: hf-clothes-model-v1
+
+      - name: Install and build
+        if: env.DATABASE_URL != '' && env.CLOUDINARY_API_SECRET != ''
+        run: npm ci && npm run build -w api
+
+      - name: Run cut-out job (up to 300 new products)
+        if: env.DATABASE_URL != '' && env.CLOUDINARY_API_SECRET != ''
+        run: node api/dist/jobs/make-cutouts.js 300
 
   catalogue-sync:
     name: Sync brand catalogues

@@ -4,6 +4,8 @@ import { Repository, type SelectQueryBuilder } from 'typeorm';
 import { paginate, type Paginated } from '../../common/dto/pagination.dto.js';
 import { Gender, type Occasion, type ProductCategory, type WearStyle } from './catalogue.enums.js';
 import type { ProductQueryDto } from './dto/product-query.dto.js';
+import type { GarmentFit } from './cutouts/garment-geometry.js';
+import { CutoutStatus, GarmentCutout } from './entities/garment-cutout.entity.js';
 import { ProductVariant } from './entities/product-variant.entity.js';
 import { Product } from './entities/product.entity.js';
 
@@ -45,6 +47,15 @@ export interface StylistSearch {
   limit: number;
 }
 
+/** What the website needs to put a garment on the camera picture (live AR try-on). */
+export interface LiveTryOn {
+  cutoutUrl: string;
+  fit: GarmentFit;
+}
+
+/** The product page: the product plus its live try-on cut-out, when one is ready. */
+export type ProductDetail = Product & { liveTryOn: LiveTryOn | null };
+
 /** A product with the sizes currently in stock (id + label), for building outfits. */
 export type StockedProduct = Product & { stock: { variantId: string; size: string }[] };
 
@@ -67,6 +78,7 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product) private readonly products: Repository<Product>,
     @InjectRepository(ProductVariant) private readonly variants: Repository<ProductVariant>,
+    @InjectRepository(GarmentCutout) private readonly cutouts: Repository<GarmentCutout>,
   ) {}
 
   /**
@@ -207,6 +219,12 @@ export class ProductsService {
       );
     }
 
+    if (query.liveTryOn) {
+      qb.andWhere(
+        `EXISTS (SELECT 1 FROM garment_cutouts g WHERE g.product_id = product.id AND g.status = 'ready')`,
+      );
+    }
+
     switch (query.sort) {
       case 'newest':
         qb.orderBy('product.createdAt', 'DESC');
@@ -245,6 +263,15 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
     return product;
+  }
+
+  /** Product page data: the product and, if the cut-out job made one, its live try-on cut-out. */
+  async findDetail(id: string): Promise<ProductDetail> {
+    const product = await this.findById(id);
+    const cutout = await this.cutouts.findOneBy({ productId: id, status: CutoutStatus.Ready });
+    const liveTryOn =
+      cutout?.cutoutUrl && cutout.fit ? { cutoutUrl: cutout.cutoutUrl, fit: cutout.fit } : null;
+    return Object.assign(product, { liveTryOn });
   }
 
   /** Same kind of piece in a similar colour, used for "You may also like" and swaps. */

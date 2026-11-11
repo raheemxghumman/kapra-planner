@@ -12,7 +12,7 @@ import { Public } from '../../common/decorators/public.decorator.js';
 import type { Paginated } from '../../common/dto/pagination.dto.js';
 import { ProductQueryDto } from './dto/product-query.dto.js';
 import type { Product } from './entities/product.entity.js';
-import { ProductsService, type Facets } from './products.service.js';
+import { ProductsService, type Facets, type ProductDetail } from './products.service.js';
 
 /** The catalogue is public: anyone can browse before creating an account. */
 @ApiTags('catalogue')
@@ -42,8 +42,8 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Product> {
-    return this.productsService.findById(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ProductDetail> {
+    return this.productsService.findDetail(id);
   }
 
   @Get(':id/similar')
