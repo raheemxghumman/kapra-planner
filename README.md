@@ -301,9 +301,9 @@ sequenceDiagram
   W->>T: POST /tryons
   T-->>W: 202 Accepted (job id)
   par Background job
-    T->>H: IDM-VTON (3-minute timeout)
+    T->>H: FASHN VTON v1.5 (3-minute timeout)
     alt Busy or failed
-      T->>H: Leffa (fallback)
+      T->>H: IDM-VTON, then Leffa (fallbacks)
     end
     H-->>T: Result image
     T->>CL: Store result
@@ -318,39 +318,45 @@ Results are cached per photo and piece, and each customer runs one job at a time
 
 ### 3. Live AR try-on (camera, on the device)
 
-Open **Try on live with your camera** on a product page (or filter the shop by *Live with your camera*). The outfit appears on you in the camera view and follows you as you move.
+Open **Try on live with your camera** on a Western top, jacket, dress or trousers (or filter the shop by *Live with your camera*). The garment appears on you in the camera view and follows you as you move; **Make it realistic** turns the same moment into a photo-realistic AI picture.
 
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'fontFamily':'Inter, Segoe UI, sans-serif','fontSize':'13px','lineColor':'#7A746B','edgeLabelBackground':'#F4F1EA'}}}%%
 flowchart LR
   subgraph Night["Nightly job (GitHub Actions)"]
-    P["Product photos"] --> SEG["segformer_b2_clothes<br/>labels every pixel"]
-    SEG --> PICK["Pick a flat-lay or a front<br/>model photo; reject cropped,<br/>back views, odd shapes"]
-    PICK --> CUT["Transparent cut-out +<br/>shoulder line, body width"]
+    P["Product photos"] --> SEG["segformer_b2_clothes<br/>pass 1: whole photo<br/>pass 2: garment close-up"]
+    SEG --> CUT["Transparent cut-out +<br/>shoulder line, body width,<br/>place in the photo"]
   end
   CUT -->|Cloudinary + garment_cutouts| API["GET /products/:id<br/>liveTryOn"]
   subgraph Device["The shopper's browser"]
-    CAM["Camera"] --> POSE["MediaPipe Pose<br/>33 body points"]
-    POSE --> FRAME["Framing coach<br/>step back / hold still"]
-    POSE --> MAT["Affine transform<br/>shoulders → garment"]
-    MAT --> DRAW["Canvas: camera +<br/>garment every frame"]
+    CAM["Camera"] --> POSE["MediaPipe Pose<br/>your joints"]
+    MODEL["Product photo"] --> MPOSE["MediaPipe Pose<br/>the model's joints"]
+    CAM --> MASK["MediaPipe segmenter<br/>hands, face, hair"]
+    POSE --> MAT["Joint-to-joint transform"]
+    MPOSE --> MAT
+    MAT --> DRAW["Canvas: camera, garment<br/>(room light), hands on top"]
+    MASK --> DRAW
   end
   API --> MAT
+  API --> MODEL
+  DRAW -->|Make it realistic| AI["FASHN VTON v1.5<br/>photo try-on"]
 
   classDef job fill:#2B2926,stroke:#2B2926,color:#F4F1EA
   classDef ai fill:#FBE3C8,stroke:#D9772B,color:#5A2E0C
   classDef client fill:#E8C9C0,stroke:#8C3B2E,color:#2B2926
   classDef server fill:#DCE3CF,stroke:#4F5A3A,color:#2B2926
-  class P,PICK,CUT job
-  class SEG,POSE ai
-  class CAM,FRAME,MAT,DRAW client
+  class P,CUT job
+  class SEG,POSE,MPOSE,MASK,AI ai
+  class CAM,MODEL,MAT,DRAW client
   class API server
 ```
 
-- **Cut-outs:** the pre-trained clothes-segmentation model [`segformer_b2_clothes`](https://huggingface.co/mattmdjaga/segformer_b2_clothes) keeps only the garment. A flat-lay (the garment alone, which many brands show) is preferred; a model photo is used only when the face is visible (so not a back view) and the garment is not cut off by the photo edge. Each cut-out is scored for symmetry and proportions, and only clean ones are offered.
-- **Fitting:** MediaPipe Pose finds the shoulders and hips in every camera frame. `garmentMatrix()` scales the garment so its body is about 1.4× the shoulder-joint width, rotates it with the shoulders, keeps its length when the user turns sideways, and pins its shoulder line just above theirs. Trousers are pinned to the hips and knees instead.
-- **Private and free:** tracking runs in the browser (WebAssembly, served by our own site), so camera frames never leave the device and the server does no work.
-- **Limits:** it is a 2D overlay, so sleeves do not follow raised arms and arms do not pass in front of the garment; the realistic photo try-on is one tap away for that.
+- **Cut-outs:** the pre-trained clothes-segmentation model [`segformer_b2_clothes`](https://huggingface.co/mattmdjaga/segformer_b2_clothes) finds the garment in the whole photo, then labels a full-resolution close-up of it for a sharp edge (trimmed by a pixel so no background halo remains). A product-only photo (flat-lay) is preferred; a model photo is used only when it is a front view and the garment is not cut off. Each cut-out is scored for symmetry and proportions. Western wear only: long kurtas and draped dupattas cannot look right as a flat overlay.
+- **Joint-to-joint fit:** for a model photo, the website finds the *model's* shoulders and hips in the product photo with MediaPipe Pose and maps them onto *yours* (`bodyMatrix`: your body axes × the inverse of the model's), so the garment follows your leaning and turning with no guessed proportions. Product-only photos are pinned by their shoulder line, with ease (1.4×) and lift (0.13×) measured on real model photos.
+- **Realism on top:** MediaPipe's multiclass segmenter puts your **hands, face and hair in front** of the garment; the garment is **darkened to match the room**; in the mirrored selfie view the garment is mirrored too, so printed text reads correctly.
+- **Make it realistic:** a 3-second countdown, then the camera picture (without the overlay) goes to the photo try-on chain, which now starts with **FASHN VTON v1.5** (open source, the most realistic free model, about 30 s).
+- **Private and free:** tracking runs in the browser (WebAssembly served by our own site), so camera frames never leave the device unless you press *Make it realistic*.
+- **Limits:** a flat overlay does not bend sleeves along raised arms; the AI photo is the realistic answer for that.
 
 ### 4. Booking a tailor and paying with Stripe
 
@@ -577,7 +583,7 @@ REST under `/api/v1`, documented with **Swagger at `/api/docs`**.
 | Backend | **NestJS 12** (ES modules), TypeORM, class-validator, Swagger | Modules, dependency injection, guards, pipes, interceptors |
 | Database | **PostgreSQL 17** on Supabase | Relational data, arrays, JSONB, row level security |
 | Real time | **Socket.IO** | Notifications, chat, live statuses |
-| AI | **Groq** (`gpt-oss-120b` stylist, `gpt-oss-20b` tagging) · **IDM-VTON / Leffa** on Hugging Face · **segformer_b2_clothes** (cut-outs) · **MediaPipe Pose** (live AR, in the browser) · **multilingual BERT** via Transformers.js | All free tiers; heavy work kept off the server |
+| AI | **Groq** (`gpt-oss-120b` stylist, `gpt-oss-20b` tagging) · **FASHN VTON v1.5 / IDM-VTON / Leffa** on Hugging Face · **segformer_b2_clothes** (cut-outs) · **MediaPipe Pose + segmenter** (live AR, in the browser) · **multilingual BERT** via Transformers.js | All free tiers; heavy work kept off the server |
 | Payments | **Stripe Checkout** (test mode, PKR) | Hosted page keeps cards off our server |
 | Maps | **OpenStreetMap** + Leaflet, **Nominatim** geocoding (cached, 1 request/second) | Free and open |
 | Images | **Cloudinary** (signed REST uploads) | Photos, try-on results, galleries |
@@ -718,8 +724,7 @@ Animations respect the system's **reduced motion** setting.
 |---|---|
 | Payments in Stripe **test mode**; refunds wait for approval in the Stripe dashboard | Live mode with a webhook secret |
 | Receipt emails are written to the server log | Resend with the project's own domain |
-| Live AR try-on is a 2D overlay (sleeves do not follow raised arms) | Bend sleeves along the arm points |
-| Try-on cuts long kurtas to shirt length (IDM-VTON) | FASHN VTON v1.5 (open source) as the first try-on provider for full-length outfits |
+| Live AR try-on is a flat overlay (sleeves do not follow raised arms); Western wear only | Bend sleeves along the arm points |
 | Roman Urdu reviews are scored less reliably | Fine-tune the sentiment model on Roman Urdu reviews |
 | Brands without a linked account are catalogue only (buy on their site) | Onboard brands as partners |
 | `kapra-planner-app.alternatefutures.ai` address | A custom domain once Alternate Clouds supports it |
