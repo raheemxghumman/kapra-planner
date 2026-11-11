@@ -357,6 +357,7 @@ flowchart LR
 - **Make it realistic:** a 3-second countdown, then the camera picture (without the overlay) goes to the photo try-on chain, which now starts with **FASHN VTON v1.5** (open source, the most realistic free model, about 30 s).
 - **Private and free:** tracking runs in the browser (WebAssembly served by our own site), so camera frames never leave the device unless you press *Make it realistic*.
 - **Limits:** a flat overlay does not bend sleeves along raised arms; the AI photo is the realistic answer for that.
+- **AI live (optional, needs an NVIDIA GPU):** with [`realtime-tryon/`](realtime-tryon/README.md) running on the same computer, the page streams the upper body to **DM-VTON**, an open real-time try-on model, which redraws the garment *onto* the body in every frame (about 29 fps on a laptop RTX 2070, using CUDA graphs). It is softer (192x256) but the garment follows the body and covers your own clothes.
 
 ### 4. Booking a tailor and paying with Stripe
 
@@ -621,6 +622,7 @@ kapra-planner/
 │       ├── layouts/              site · auth · dashboard
 │       └── pages/                landing · shop · tailors · customer · bookings ·
 │                                 orders · tailor-panel · brand-panel · admin
+├── realtime-tryon/               optional GPU server for AI live try-on (Python, DM-VTON)
 ├── docs/                         plan, backlog, viva notes, design changes
 └── .github/workflows/            ci.yml · image.yml · jobs.yml
 ```
